@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import sys
-import cv2
+import cv2   # Notes: https://cs.gmu.edu/~kosecka/cs482/code-examples/opencv-python/OpenCV_Python.pdf
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
@@ -86,6 +86,7 @@ input("Press ENTER twice to close all windows ...")
 input("Press ENTER to exit ...")
 # pauses for 3 seconds
 if cv2.waitKey(3000) == 27: #if ENTER is pressed
+  cap.release()
   cv2.destroyAllWindows()
 plt.pause(0.5)
 plt.close()
