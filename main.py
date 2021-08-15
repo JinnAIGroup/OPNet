@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import sys
-import cv2   # Notes: https://cs.gmu.edu/~kosecka/cs482/code-examples/opencv-python/OpenCV_Python.pdf
+import cv2   # https://cs.gmu.edu/~kosecka/cs482/code-examples/opencv-python/OpenCV_Python.pdf
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
