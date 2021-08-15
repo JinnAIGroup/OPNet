@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 import sys
 import cv2   # https://cs.gmu.edu/~kosecka/cs482/code-examples/opencv-python/OpenCV_Python.pdf
-import matplotlib
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
 from tqdm import tqdm
 from tensorflow.keras.models import load_model
 from common.transformations.camera import transform_img, eon_intrinsics
