@@ -12,12 +12,6 @@ from common.tools.lib.parser import parser
 camerafile = sys.argv[1]
 supercombo = load_model('models/supercombo.keras')
 
-MAX_DISTANCE = 140.
-LANE_OFFSET = 1.8
-MAX_REL_V = 10.
-LEAD_X_SCALE = 10
-LEAD_Y_SCALE = 10
-
 cap = cv2.VideoCapture(camerafile)
 
 imgs = []
@@ -26,7 +20,24 @@ imgs = []
 for i in tqdm(range(1000//50)):
   ret, frame = cap.read()
   img_yuv = cv2.cvtColor(frame, cv2.COLOR_BGR2YUV_I420)
-  imgs.append(img_yuv.reshape((874*3//2, 1164)))
+  if i==0:
+    print("\n---JLL   ret = ", ret)
+    print("---JLL   frame.shape = ", frame.shape) # 874*1164*3
+    print("---JLL   img_yuv.shape = ", img_yuv.shape) # 1311×1164 = 1526004
+    x = img_yuv.reshape((874*3//2, 1164))
+    print("---JLL   img_yuv.reshape = ", x.shape)
+  imgs.append(img_yuv.reshape((874*3//2, 1164))) # 874*3//2 = 1311
+  # http://www.cse.psu.edu/~rtc12/CSE486/lecture13.pdf
+  # https://drive.google.com/file/d/1tWSU4Y-xUSI-sy6ht2wfeF-w687k_Y9D/view
+  # https://en.wikipedia.org/wiki/Camera_resectioning
+
+imgs_med_model = np.zeros((len(imgs), 384, 512), dtype=np.uint8)
+print("---JLL   imgs.shape = ", np.shape(imgs))
+print("---JLL   imgs_med_model.shape = ", imgs_med_model.shape)
+
+for i, img in tqdm(enumerate(imgs)):
+  imgs_med_model[i] = transform_img(img, from_intr=eon_intrinsics, to_intr=medmodel_intrinsics,
+                                yuv=True, output_size=(512,256))
 
 def frames_to_tensor(frames):
   H = (frames.shape[1]*2)//3
@@ -41,10 +52,6 @@ def frames_to_tensor(frames):
   in_img1[:, 5] = frames[:, H+H//4:H+H//2].reshape((-1, H//2,W//2))
   return in_img1
 
-imgs_med_model = np.zeros((len(imgs), 384, 512), dtype=np.uint8)
-for i, img in tqdm(enumerate(imgs)):
-  imgs_med_model[i] = transform_img(img, from_intr=eon_intrinsics, to_intr=medmodel_intrinsics, yuv=True,
-                                    output_size=(512,256))
 frame_tensors = frames_to_tensor(np.array(imgs_med_model)).astype(np.float32)/128.0 - 1.0
 
 state = np.zeros((1,512))
@@ -62,6 +69,17 @@ for i in tqdm(range(len(frame_tensors) - 1)):
   ret, frame = cap.read()
   frame = cv2.resize(frame, (640, 420))
   # Show raw camera image
+  if i==0:
+    #print("---JLL   inputs = ", inputs)
+    print("\n")
+    [print("---JLL    i = ", i, ", inputs[i].shape = ", np.shape(inputs[i])) for i in range(len(inputs))]
+    #print("---JLL     outs = ", outs)
+    [print("---JLL    i = ", i, ", outs[i].shape = ", np.shape(outs[i])) for i in range(len(outs))]
+    #print("---JLL   parsed = ", parsed)
+    [print("---JLL    x = ", x, ",    parsed[x].shape = ", parsed[x].shape) for x in parsed]
+    print("---JLL    state.shape = ", np.shape(state))
+    print("---JLL     pose.shape = ", np.shape(pose))
+    print("---JLL   frame.cv2.resize.shape = ", frame.shape)
   cv2.imshow("modeld", frame)
   # Clean plot for next frame
   plt.clf()
@@ -69,9 +87,9 @@ for i in tqdm(range(len(frame_tensors) - 1)):
   # lll = left lane line
   plt.plot(parsed["lll"][0], range(0,192), "b-", linewidth=1)
   # rll = right lane line
-  plt.plot(parsed["rll"][0], range(0, 192), "r-", linewidth=1)
+  plt.plot(parsed["rll"][0], range(0,192), "r-", linewidth=1)
   # path = path cool isn't it ?
-  plt.plot(parsed["path"][0], range(0, 192), "g-", linewidth=1)
+  plt.plot(parsed["path"][0], range(0,192), "g-", linewidth=1)
   #print(np.array(pose[0,:3]).shape)
   #plt.scatter(pose[0,:3], range(3), c="y")
 
@@ -83,8 +101,8 @@ for i in tqdm(range(len(frame_tensors) - 1)):
 
 input("Press ENTER twice to close all windows ...")
 input("Press ENTER to exit ...")
-# pauses for 3 seconds
-if cv2.waitKey(3000) == 27: #if ENTER is pressed
+# pauses for 1 second
+if cv2.waitKey(1000) == 27: #if ENTER is pressed
   cap.release()
   cv2.destroyAllWindows()
 plt.pause(0.5)
