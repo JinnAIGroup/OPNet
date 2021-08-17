@@ -5,6 +5,6 @@
 1. Download [modeld](https://github.com/littlemountainman/modeld) and [main.py](https://github.com/JinnAIGroup/OPNet/blob/main/main.py)
 2. mv /dataA/.../fcamera.hevc to /Leon/fcamera.hevc
 3. (YPN) jinn@Liu:~/YPN/Leon$ python3 main.py ./fcamera.hevc
-4. Your Project: Run TData *.hevc files. Study [main.py](https://github.com/JinnAIGroup/OPNet/blob/main/main.py) (old [main.py](https://drive.google.com/file/d/1--Jk2qV7sZJ8ixkm5XYZI5omFX7dIcWa/view)), [supercombo.h5](https://drive.google.com/file/d/1L8sWgYKtH77K6Kr3FQMETtAWeQNyyb8R/view), and modify [modeld](https://github.com/littlemountainman/modeld).
+4. Your Project: Study [main.py](https://github.com/JinnAIGroup/OPNet/blob/main/main.py) (old [main.py](https://drive.google.com/file/d/1--Jk2qV7sZJ8ixkm5XYZI5omFX7dIcWa/view)), [supercombo.h5](https://drive.google.com/file/d/1L8sWgYKtH77K6Kr3FQMETtAWeQNyyb8R/view), and modify [modeld](https://github.com/littlemountainman/modeld).
 
 JLL 2020.7.2, 2021.8.15.
