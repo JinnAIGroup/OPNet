@@ -1,22 +1,32 @@
+FULL_FRAME_SIZE = (1164, 874)
+W, H = FULL_FRAME_SIZE[0], FULL_FRAME_SIZE[1]
+eon_focal_length = FOCAL = 910.0
+cv2.COLOR_BGR2YUV_I420
+
 ---JLL   ret                  =  True
----JLL   frame.shape          =  (874, 1164, 3)
----JLL   img_yuv.shape        =  (1311, 1164)
----JLL   img_yuv.reshape      =  (1311, 1164)
+---JLL   frame.shape          =  (874, 1164, 3)   # RGB
+---JLL   img_yuv.shape        =  (1311, 1164)     # 874*3//2 = 1311
+---JLL   img_yuv.reshape      =  (1311, 1164)     # 1311×1164 = 1,526,004
 ---JLL   imgs.shape           =  (20, 1311, 1164)
 ---JLL   imgs_med_model.shape =  (20, 384, 512)
----JLL   inputs[ 0 ].shape =  (1, 12, 128, 256)
----JLL   inputs[ 1 ].shape =  (1, 8)
----JLL   inputs[ 2 ].shape =  (1, 512)
----JLL   outs[ 0 ].shape =  (1, 385)
----JLL   outs[ 1 ].shape =  (1, 386)
----JLL   outs[ 2 ].shape =  (1, 386)
----JLL   outs[ 3 ].shape =  (1, 58)
----JLL   outs[ 4 ].shape =  (1, 200)
----JLL   outs[ 5 ].shape =  (1, 200)
----JLL   outs[ 6 ].shape =  (1, 200)
----JLL   outs[ 7 ].shape =  (1, 4)
----JLL   outs[ 8 ].shape =  (1, 32)
----JLL   outs[ 9 ].shape =  (1, 12)
+---JLL   np.array(imgs_med_model).shape              =  (20, 384, 512)     # 384 = 3 RGB Channels x 128?
+---JLL   frame_tensors.shape                         =  (20, 6, 128, 256)  # /128.0?
+---JLL   frame_tensors[i:i+2].shape                  =  (2, 6, 128, 256)
+---JLL   np.vstack(frame_tensors[i:i+2]).shape       =  (12, 128, 256)
+---JLL   np.vstack(frame_tensors[i:i+2])[None].shape =  (1, 12, 128, 256)
+---JLL   inputs[ 0 ].shape =  (1, 12, 128, 256)   # 12 = 2 frames x 6 channels (YUV_I420: Y=4, U=1, V=1) Wrong?!
+---JLL   inputs[ 1 ].shape =  (1, 8)              # output_size=(512,256)/2 => 128, 256 => (20, 384=128x3?, 512)
+---JLL   inputs[ 2 ].shape =  (1, 512)            # 12 = 2 frames x 3 RGB channels x 3 (128)
+---JLL   outs[ 0  ].shape =  (1, 385)             
+---JLL   outs[ 1  ].shape =  (1, 386)
+---JLL   outs[ 2  ].shape =  (1, 386)
+---JLL   outs[ 3  ].shape =  (1, 58)
+---JLL   outs[ 4  ].shape =  (1, 200)
+---JLL   outs[ 5  ].shape =  (1, 200)
+---JLL   outs[ 6  ].shape =  (1, 200)
+---JLL   outs[ 7  ].shape =  (1, 4)
+---JLL   outs[ 8  ].shape =  (1, 32)
+---JLL   outs[ 9  ].shape =  (1, 12)
 ---JLL   outs[ 10 ].shape =  (1, 512)
 ---JLL   parsed[ path             ].shape =  (1, 192)
 ---JLL   parsed[ path_stds        ].shape =  (1, 192)

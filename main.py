@@ -52,7 +52,9 @@ def frames_to_tensor(frames):
   in_img1[:, 5] = frames[:, H+H//4:H+H//2].reshape((-1, H//2,W//2))
   return in_img1
 
-frame_tensors = frames_to_tensor(np.array(imgs_med_model)).astype(np.float32)/128.0 - 1.0
+frame_tensors = frames_to_tensor(np.array(imgs_med_model)).astype(np.float32)/128.0 - 1.0   # /128.0?
+print("---JLL   np.array(imgs_med_model).shape = ", np.shape(np.array(imgs_med_model)))
+print("---JLL   frame_tensors.shape = ", np.shape(frame_tensors))
 
 state = np.zeros((1,512))
 desire = np.zeros((1,8))
@@ -72,11 +74,14 @@ for i in tqdm(range(len(frame_tensors) - 1)):
   if i==0:
     #print("---JLL   inputs = ", inputs)
     print("\n")
-    [print("---JLL    i = ", i, ", inputs[i].shape = ", np.shape(inputs[i])) for i in range(len(inputs))]
+    print("---JLL   frame_tensors[i:i+2].shape = ", np.shape(frame_tensors[i:i+2]))
+    print("---JLL   np.vstack(frame_tensors[i:i+2]).shape = ", np.shape(np.vstack(frame_tensors[i:i+2])))
+    print("---JLL   np.vstack(frame_tensors[i:i+2])[None].shape = ", np.shape(np.vstack(frame_tensors[i:i+2])[None]))
+    [print("---JLL   inputs[", i, "].shape = ", np.shape(inputs[i])) for i in range(len(inputs))]
     #print("---JLL     outs = ", outs)
-    [print("---JLL    i = ", i, ", outs[i].shape = ", np.shape(outs[i])) for i in range(len(outs))]
+    [print("---JLL   outs[", i, "].shape = ", np.shape(outs[i])) for i in range(len(outs))]
     #print("---JLL   parsed = ", parsed)
-    [print("---JLL    x = ", x, ",    parsed[x].shape = ", parsed[x].shape) for x in parsed]
+    [print("---JLL   parsed[", x, "].shape = ", parsed[x].shape) for x in parsed]
     print("---JLL    state.shape = ", np.shape(state))
     print("---JLL     pose.shape = ", np.shape(pose))
     print("---JLL   frame.cv2.resize.shape = ", frame.shape)
