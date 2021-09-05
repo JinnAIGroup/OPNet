@@ -1,4 +1,12 @@
-#!/usr/bin/env python3
+'''
+Leon's main.py   JLL, 2021.8.14 - 9.5
+
+1. Download modeld and main.py (see https://github.com/JinnAIGroup/OPNet)
+2. mv /dataA/.../fcamera.hevc to /Leon/fcamera.hevc
+3. (YPN) jinn@Liu:~/YPN/Leon$ python3 main.py ./fcamera.hevc
+4. Read output.txt
+5. Your Project: Build your own Net to replace supercombo.h5.
+'''
 import sys
 import cv2   # https://cs.gmu.edu/~kosecka/cs482/code-examples/opencv-python/OpenCV_Python.pdf
 import numpy as np
@@ -10,7 +18,35 @@ from common.transformations.model import medmodel_intrinsics
 from common.tools.lib.parser import parser
 
 camerafile = sys.argv[1]
-supercombo = load_model('models/supercombo.keras')
+#supercombo = load_model('models/supercombo.keras')
+# OK in loading and running
+supercombo = load_model('models/opUNet1.h5')
+# OK in loading
+'''
+supercombo = load_model('models/yolov3.h5')
+OK in loading
+supercombo = load_model('models/mobile.h5')
+OK in loading
+supercombo = load_model('models/opEffA2.h5')
+NG in loading
+supercombo = load_model('models/mnist.h5')
+NG in loading
+ValueError: No model found in config file.
+supercombo = load_model('models/open.h5')
+NG in loading
+ValueError: No model found in config file.
+supercombo = load_model('models/opEffA.h5')
+NG in loading
+ValueError: Unknown layer: MBConvBlock
+supercombo = load_model('models/masksup3.h5')
+NG in loading
+ValueError: bad marshal data (unknown type code)
+supercombo = load_model('models/weights-opeffA.best.hdf5')
+NG in loading
+ValueError: Unknown layer: MBConvBlock
+  File "/home/jinn/.pyenv/versions/YPN/lib/python3.8/site-packages/tensorflow/python/keras/saving/save.py", line 182, in load_model
+    return hdf5_format.load_model_from_hdf5(filepath, custom_objects, compile)
+'''
 
 cap = cv2.VideoCapture(camerafile)
 
@@ -31,17 +67,18 @@ for i in tqdm(range(1000//50)):
   # https://drive.google.com/file/d/1tWSU4Y-xUSI-sy6ht2wfeF-w687k_Y9D/view
   # https://en.wikipedia.org/wiki/Camera_resectioning
 
-imgs_med_model = np.zeros((len(imgs), 384, 512), dtype=np.uint8)
+imgs_med_model = np.zeros((len(imgs), 384, 512), dtype=np.uint8) # np.uint8 = 0~255
 print("---JLL   imgs.shape = ", np.shape(imgs))
 print("---JLL   imgs_med_model.shape = ", imgs_med_model.shape)
 
 for i, img in tqdm(enumerate(imgs)):
   imgs_med_model[i] = transform_img(img, from_intr=eon_intrinsics, to_intr=medmodel_intrinsics,
                                 yuv=True, output_size=(512,256))
+  # transform_img.cv2.COLOR_YUV2RGB_I420 => YUV img (input) to RGB imgs_med_model (output)
 
 def frames_to_tensor(frames):
-  H = (frames.shape[1]*2)//3
-  W = frames.shape[2]
+  H = (frames.shape[1]*2)//3  # 384x2//3 = 768//3 = 256
+  W = frames.shape[2]         # 512
   in_img1 = np.zeros((frames.shape[0], 6, H//2, W//2), dtype=np.uint8)
 
   in_img1[:, 0] = frames[:, 0:H:2, 0::2]
@@ -52,7 +89,7 @@ def frames_to_tensor(frames):
   in_img1[:, 5] = frames[:, H+H//4:H+H//2].reshape((-1, H//2,W//2))
   return in_img1
 
-frame_tensors = frames_to_tensor(np.array(imgs_med_model)).astype(np.float32)/128.0 - 1.0   # /128.0?
+frame_tensors = frames_to_tensor(np.array(imgs_med_model)).astype(np.float32)/128.0 - 1.0   # /128.0 - 1.0?
 print("---JLL   np.array(imgs_med_model).shape = ", np.shape(np.array(imgs_med_model)))
 print("---JLL   frame_tensors.shape = ", np.shape(frame_tensors))
 
