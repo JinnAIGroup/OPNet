@@ -18,11 +18,11 @@ from common.transformations.model import medmodel_intrinsics
 from common.tools.lib.parser import parser
 
 camerafile = sys.argv[1]
-#supercombo = load_model('models/supercombo.keras')
+supercombo = load_model('models/supercombo.keras')
 # OK in loading and running
-supercombo = load_model('models/opUNet1.h5')
-# OK in loading
 '''
+supercombo = load_model('models/opUNet1.h5')
+OK in loading
 supercombo = load_model('models/yolov3.h5')
 OK in loading
 supercombo = load_model('models/mobile.h5')
