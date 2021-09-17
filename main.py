@@ -1,5 +1,5 @@
 '''
-Leon's main.py   JLL, 2021.8.14 - 9.5
+Leon's main.py   JLL, 2021.8.14 - 9.5, 9.17
 
 1. Download modeld and main.py (see https://github.com/JinnAIGroup/OPNet)
 2. mv /dataA/.../fcamera.hevc to /Leon/fcamera.hevc
@@ -20,9 +20,12 @@ from common.tools.lib.parser import parser
 camerafile = sys.argv[1]
 supercombo = load_model('models/supercombo.keras')
 # OK in loading and running
+#supercombo = load_model('models/opEffPNb2.h5')
+# OK in loading, NG in running
+# ValueError: Unknown loss function: custom_loss
 '''
 supercombo = load_model('models/opUNet1.h5')
-OK in loading
+# OK in loading
 supercombo = load_model('models/yolov3.h5')
 OK in loading
 supercombo = load_model('models/mobile.h5')
