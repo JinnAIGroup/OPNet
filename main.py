@@ -1,5 +1,5 @@
 '''
-Leon's main.py   JLL, 2021.8.14 - 9.5, 9.17
+Leon's main.py   JLL, 2021.8.14 - 9.5, 9.18
 
 1. Download modeld and main.py (see https://github.com/JinnAIGroup/OPNet)
 2. mv /dataA/.../fcamera.hevc to /Leon/fcamera.hevc
@@ -58,21 +58,21 @@ imgs = []
 #for i in tqdm(range(1000)):
 for i in tqdm(range(1000//50)):
   ret, frame = cap.read()
+  #---  ret =  True
+  #---  frame.shape =  (874, 1164, 3)
   img_yuv = cv2.cvtColor(frame, cv2.COLOR_BGR2YUV_I420)
+  #---  img_yuv.shape =  (1311, 1164)
   if i==0:
-    print("\n---JLL   ret = ", ret)
-    print("---JLL   frame.shape = ", frame.shape) # 874*1164*3
-    print("---JLL   img_yuv.shape = ", img_yuv.shape) # 1311×1164 = 1526004
-    x = img_yuv.reshape((874*3//2, 1164))
-    print("---JLL   img_yuv.reshape = ", x.shape)
-  imgs.append(img_yuv.reshape((874*3//2, 1164))) # 874*3//2 = 1311
+    x = img_yuv.reshape((874*3//2, 1164)) # 874*3//2 = 1311
+    #---  x.shape =  (1311, 1164)
+  imgs.append(img_yuv.reshape((874*3//2, 1164)))
   # http://www.cse.psu.edu/~rtc12/CSE486/lecture13.pdf
   # https://drive.google.com/file/d/1tWSU4Y-xUSI-sy6ht2wfeF-w687k_Y9D/view
   # https://en.wikipedia.org/wiki/Camera_resectioning
 
 imgs_med_model = np.zeros((len(imgs), 384, 512), dtype=np.uint8) # np.uint8 = 0~255
-print("---JLL   imgs.shape = ", np.shape(imgs))
-print("---JLL   imgs_med_model.shape = ", imgs_med_model.shape)
+#---  np.shape(imgs) =  (20, 1311, 1164)
+#---  imgs_med_model.shape =  (20, 384, 512)
 
 for i, img in tqdm(enumerate(imgs)):
   imgs_med_model[i] = transform_img(img, from_intr=eon_intrinsics, to_intr=medmodel_intrinsics,
@@ -93,8 +93,8 @@ def frames_to_tensor(frames):
   return in_img1
 
 frame_tensors = frames_to_tensor(np.array(imgs_med_model)).astype(np.float32)/128.0 - 1.0   # /128.0 - 1.0?
-print("---JLL   np.array(imgs_med_model).shape = ", np.shape(np.array(imgs_med_model)))
-print("---JLL   frame_tensors.shape = ", np.shape(frame_tensors))
+#---  np.shape(np.array(imgs_med_model)) =  (20, 384, 512)
+#---  np.shape(frame_tensors) =  (20, 6, 128, 256)
 
 state = np.zeros((1,512))
 desire = np.zeros((1,8))
@@ -103,28 +103,59 @@ cap = cv2.VideoCapture(camerafile)
 
 for i in tqdm(range(len(frame_tensors) - 1)):
   inputs = [np.vstack(frame_tensors[i:i+2])[None], desire, state]
+  #if i==0:
+    #---  inputs[ 0 ].shape =  (1, 12, 128, 256)
+    #---  inputs[ 1 ].shape =  (1, 8)
+    #---  inputs[ 2 ].shape =  (1, 512)
   outs = supercombo.predict(inputs)
+    #---  outs[ 0 ].shape =  (1, 385)
+    #---  outs[ 1 ].shape =  (1, 386)
+    #---  outs[ 2 ].shape =  (1, 386)
+    #---  outs[ 3 ].shape =  (1, 58)
+    #---  outs[ 4 ].shape =  (1, 200)
+    #---  outs[ 5 ].shape =  (1, 200)
+    #---  outs[ 6 ].shape =  (1, 200)
+    #---  outs[ 7 ].shape =  (1, 4)
+    #---  outs[ 8 ].shape =  (1, 32)
+    #---  outs[ 9 ].shape =  (1, 12)
+    #---  outs[ 10 ].shape =  (1, 512)
   parsed = parser(outs)
+    #---  parsed[ path ].shape =  (1, 192)
+    #---  parsed[ path_stds ].shape =  (1, 192)
+    #---  parsed[ lll ].shape =  (1, 192)
+    #---  parsed[ lll_prob ].shape =  (1,)
+    #---  parsed[ lll_stds ].shape =  (1, 192)
+    #---  parsed[ rll ].shape =  (1, 192)
+    #---  parsed[ rll_prob ].shape =  (1,)
+    #---  parsed[ rll_stds ].shape =  (1, 192)
+    #---  parsed[ lead_xyva ].shape =  (1, 4)
+    #---  parsed[ lead_xyva_std ].shape =  (1, 4)
+    #---  parsed[ lead_prob ].shape =  (1,)
+    #---  parsed[ lead_xyva_2s ].shape =  (1, 4)
+    #---  parsed[ lead_xyva_std_2s ].shape =  (1, 4)
+    #---  parsed[ lead_prob_2s ].shape =  (1,)
+    #---  parsed[ lead_all ].shape =  (1, 58)
+    #---  parsed[ meta ].shape =  (1, 32)
+    #---  parsed[ desire ].shape =  (1, 12)
+    #---  parsed[ desire_state ].shape =  (1, 4)
+    #---  parsed[ long_x ].shape =  (1, 200)
+    #---  parsed[ long_v ].shape =  (1, 200)
+    #---  parsed[ long_a ].shape =  (1, 200)
+    #---  parsed[ trans ].shape =  (1, 3)
+    #---  parsed[ trans_std ].shape =  (1, 3)
+    #---  parsed[ rot ].shape =  (1, 3)
+    #---  parsed[ rot_std ].shape =  (1, 3)
   # Important to refeed the state
   state = outs[-1]
+  #---  np.shape(state) =  (1, 512)
   pose = outs[-2]
+  #print(np.array(pose[0,:3]).shape)
+  #---  np.shape(pose) =  (1, 12)
   ret, frame = cap.read()
   frame = cv2.resize(frame, (640, 420))
+  #---  frame.shape =  (420, 640, 3)
+
   # Show raw camera image
-  if i==0:
-    #print("---JLL   inputs = ", inputs)
-    print("\n")
-    print("---JLL   frame_tensors[i:i+2].shape = ", np.shape(frame_tensors[i:i+2]))
-    print("---JLL   np.vstack(frame_tensors[i:i+2]).shape = ", np.shape(np.vstack(frame_tensors[i:i+2])))
-    print("---JLL   np.vstack(frame_tensors[i:i+2])[None].shape = ", np.shape(np.vstack(frame_tensors[i:i+2])[None]))
-    [print("---JLL   inputs[", i, "].shape = ", np.shape(inputs[i])) for i in range(len(inputs))]
-    #print("---JLL     outs = ", outs)
-    [print("---JLL   outs[", i, "].shape = ", np.shape(outs[i])) for i in range(len(outs))]
-    #print("---JLL   parsed = ", parsed)
-    [print("---JLL   parsed[", x, "].shape = ", parsed[x].shape) for x in parsed]
-    print("---JLL    state.shape = ", np.shape(state))
-    print("---JLL     pose.shape = ", np.shape(pose))
-    print("---JLL   frame.cv2.resize.shape = ", frame.shape)
   cv2.imshow("modeld", frame)
   # Clean plot for next frame
   plt.clf()
@@ -135,7 +166,6 @@ for i in tqdm(range(len(frame_tensors) - 1)):
   plt.plot(parsed["rll"][0], range(0,192), "r-", linewidth=1)
   # path = path cool isn't it ?
   plt.plot(parsed["path"][0], range(0,192), "g-", linewidth=1)
-  #print(np.array(pose[0,:3]).shape)
   #plt.scatter(pose[0,:3], range(3), c="y")
 
   # Needed to invert axis because standart left lane is positive and right lane is negative, so we flip the x axis
@@ -153,3 +183,19 @@ if cv2.waitKey(1000) == 27: #if ENTER is pressed
 plt.pause(0.5)
 plt.close()
 #plt.show()
+
+'''
+  if i==0:
+    #print("#---  inputs = ", inputs)
+    print("#---  frame_tensors[i:i+2].shape = ", np.shape(frame_tensors[i:i+2]))
+    print("#---  np.vstack(frame_tensors[i:i+2]).shape = ", np.shape(np.vstack(frame_tensors[i:i+2])))
+    print("#---  np.vstack(frame_tensors[i:i+2])[None].shape = ", np.shape(np.vstack(frame_tensors[i:i+2])[None]))
+    [print("#---  inputs[", i, "].shape = ", np.shape(inputs[i])) for i in range(len(inputs))]
+    #print("#---  outs = ", outs)
+    [print("#---  outs[", i, "].shape = ", np.shape(outs[i])) for i in range(len(outs))]
+    #print("#---  parsed = ", parsed)
+    [print("#---  parsed[", x, "].shape = ", parsed[x].shape) for x in parsed]
+    print("#---  np.shape(state) = ", np.shape(state))
+    print("#---  np.shape(pose) = ", np.shape(pose))
+    print("#---  frame.shape = ", frame.shape)
+'''
