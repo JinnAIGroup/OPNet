@@ -1,3 +1,10 @@
+'''  JLL, 2021.8.14, 9.5, 9.20
+Leon's common/transformations/camera.py
+
+http://www.cse.psu.edu/~rtc12/CSE486/lecture13.pdf
+https://drive.google.com/file/d/1tWSU4Y-xUSI-sy6ht2wfeF-w687k_Y9D/view
+https://en.wikipedia.org/wiki/Camera_resectioning
+'''
 import numpy as np
 import common.transformations.orientation as orient
 import math
@@ -150,7 +157,9 @@ def transform_img(base_img,
   cv2.setNumThreads(1)
 
   if yuv:
+    #---  base_img.shape (1311, 1164)
     base_img = cv2.cvtColor(base_img, cv2.COLOR_YUV2RGB_I420)
+    #---  base_img.shape (874, 1164, 3)
 
   size = base_img.shape[:2]
   if not output_size:
@@ -195,14 +204,17 @@ def transform_img(base_img,
     augmented_rgb = cv2.GaussianBlur(augmented_rgb,(blur*2+1,blur*2+1),cv2.BORDER_DEFAULT)
 
   if yuv:
+    #print("#---   augmented_rgb.shape", augmented_rgb.shape)
+    #---  augmented_rgb.shape (256, 512, 3)
     augmented_img = cv2.cvtColor(augmented_rgb, cv2.COLOR_RGB2YUV_I420)
-    print("---JLL   xxxxxxxxxx augmented_img.shape", augmented_img.shape)
+    #print("#---   augmented_img.shape", augmented_img.shape)
+    #---  augmented_img.shape (384, 512)
   else:
     augmented_img = augmented_rgb
   return augmented_img
 
 def yuv_crop(frame, output_size, center=None):
-  # output_size in camera coordinates so u,v
+  # output_size in camera coordinates so u, v
   # center in array coordinates so row, column
   import cv2  # pylint: disable=import-error
   rgb = cv2.cvtColor(frame, cv2.COLOR_YUV2RGB_I420)
