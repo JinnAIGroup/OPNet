@@ -6,7 +6,7 @@ Build modelB3 = Tiny EfficientNet (Eff) + Pose Net (PN) = opEffPNb3
    file:///home/jinn/snpe/dlc/supercombo079.html
 2. Read carefully Leon's main.py, camera.py, etc. for OP I/O format (very complicated)
 3. Input shape = (None, 12, 128, 256)
-4. Output shape =  (None, 2383)   # not yet
+4. Output shape =  (None, 2383)   # ToDo
 5. Run1: (YPN) jinn@Liu:~/YPN/Leon$ python modelB3.py
 '''
 
