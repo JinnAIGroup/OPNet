@@ -3,7 +3,7 @@ Leon's main.py
 
 1. Download modeld and main.py (see https://github.com/JinnAIGroup/OPNet)
 2. mv /dataA/.../fcamera.hevc to /Leon/fcamera.hevc
-3. (YPN) jinn@Liu:~/YPN/Leon$ python3 main.py ./fcamera.hevc
+3. (YPN) jinn@Liu:~/YPN/Leon$ python main.py ./fcamera.hevc
 4. Read output.txt
 5. Your Project: Build your own Net to replace supercombo.h5.
 '''
@@ -49,7 +49,9 @@ imgs_med_model = np.zeros((len(imgs), 384, 512), dtype=np.uint8) # np.uint8 = 0~
 for i, img in tqdm(enumerate(imgs)):
   imgs_med_model[i] = transform_img(img, from_intr=eon_intrinsics, to_intr=medmodel_intrinsics,
                                     yuv=True, output_size=(512, 256))
-  # input: YUV img (1311, 1164) => transform_img() => output: RGB imgs_med_model (874, 1164, 3)
+  # input: YUV img (1311, 1164) => transform_img() => output: YUV imgs_med_model (384, 512)
+
+#---  imgs_med_model[0].shape = (384, 512)
 
 def frames_to_tensor(frames):
   #---  np.shape(frames) = (20, 384, 512) = (B, H, W)
