@@ -49,9 +49,13 @@ imgs_med_model = np.zeros((len(imgs), 384, 512), dtype=np.uint8) # np.uint8 = 0~
 for i, img in tqdm(enumerate(imgs)):
   imgs_med_model[i] = transform_img(img, from_intr=eon_intrinsics, to_intr=medmodel_intrinsics,
                                     yuv=True, output_size=(512, 256))
-  # input: YUV img (1311, 1164) => transform_img() => output: YUV imgs_med_model (384, 512)
-
-#---  imgs_med_model[0].shape = (384, 512)
+'''
+imgs_med_model[0].shape = (384, 512)
+input: YUV img (1311, 1164) => transform_img() => cv2.COLOR_YUV2RGB_I420
+  => RGB (874, 1164, 3) => cv2.warpPerspective) => np.clip
+  => RGB (256, 512, 3) => cv2.COLOR_RGB2YUV_I420 =>
+output: YUV imgs_med_model (384, 512)
+'''
 
 def frames_to_tensor(frames):
   #---  np.shape(frames) = (20, 384, 512) = (B, H, W)
