@@ -1,4 +1,4 @@
-'''  JLL, 2021.8.14, 9.5, 9.20
+'''  JLL, 2021.8.14, 9.5, 9.21
 Leon's main.py
 
 1. Download modeld and main.py (see https://github.com/JinnAIGroup/OPNet)
@@ -48,17 +48,19 @@ imgs_med_model = np.zeros((len(imgs), 384, 512), dtype=np.uint8) # np.uint8 = 0~
 
 for i, img in tqdm(enumerate(imgs)):
   imgs_med_model[i] = transform_img(img, from_intr=eon_intrinsics, to_intr=medmodel_intrinsics,
-                                    yuv=True, output_size=(512, 256))
+                                    yuv=True, output_size=(512, 256))  # (W, H)
 '''
 input: YUV img (1311, 1164) => transform_img() => cv2.COLOR_YUV2RGB_I420
   => RGB (874, 1164, 3) => cv2.warpPerspective) => np.clip
   => RGB (256, 512, 3) => cv2.COLOR_RGB2YUV_I420 =>
-output: YUV imgs_med_model[0].shape = (384, 512)
+output: YUV imgs_med_model[0].shape = (384, 512)  # 256*3//2 = 384
+RGB, YUV444: 3 bytes per pixel; YUV420: 6 bytes per 4 pixels [wiki yuv]
+RGB (874, 1164, 3) = 874*1164*3 bytes => YUV (1311, 1164) = 1311*1164 = 874*3//2*1164 bytes
 '''
 
 def frames_to_tensor(frames):
-  #---  np.shape(frames) = (20, 384, 512) = (B, H, W)
-  H = (frames.shape[1]*2)//3  # 384x2//3 = 768//3 = 256
+  #---  np.shape(frames) = (20, 384, 512) = (B, H, W)  YUV
+  H = (frames.shape[1]*2)//3  # 384x2//3 = 256
   W = frames.shape[2]         # 512
   in_img1 = np.zeros((frames.shape[0], 6, H//2, W//2), dtype=np.uint8)
 
@@ -70,7 +72,11 @@ def frames_to_tensor(frames):
   in_img1[:, 5] = frames[:, H+H//4:H+H//2].reshape((-1, H//2, W//2))
 
   return in_img1
-  #---  np.shape(in_img1) = (20, 6, 128, 256) = (B, 2C, )
+'''
+np.shape(in_img1) = (20, 6, 128, 256) = (B, C, H, W) YUV420 => C = 6 ???
+RGB (256, 512, 3) = 256*512*3 bytes => YUV (384, 512) = 256*3//2*512
+= 128*512*3 = 128*256*6 bytes => C = 6 QED
+'''
 
 frame_tensors = frames_to_tensor(np.array(imgs_med_model)).astype(np.float32)/128.0 - 1.0   # /128.0 - 1.0?
 #---  np.shape(np.array(imgs_med_model)) =  (20, 384, 512)
