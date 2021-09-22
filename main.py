@@ -1,4 +1,4 @@
-'''  JLL, 2021.8.14, 9.5, 9.21
+'''  JLL, 2021.8.14, 9.5, 9.22
 Leon's main.py
 
 1. Download modeld and main.py (see https://github.com/JinnAIGroup/OPNet)
@@ -54,33 +54,54 @@ input: YUV img (1311, 1164) => transform_img() => cv2.COLOR_YUV2RGB_I420
   => RGB (874, 1164, 3) => cv2.warpPerspective) => np.clip
   => RGB (256, 512, 3) => cv2.COLOR_RGB2YUV_I420 =>
 output: YUV imgs_med_model[0].shape = (384, 512)  # 256*3//2 = 384
-RGB, YUV444: 3 bytes per pixel; YUV420: 6 bytes per 4 pixels [wiki yuv]
+RGB, YUV444: 3 bytes per pixel; YUV420: 6 bytes per 4 pixels [Wiki YUV]
 RGB (874, 1164, 3) = 874*1164*3 bytes => YUV (1311, 1164) = 1311*1164 = 874*3//2*1164 bytes
 '''
 
 def frames_to_tensor(frames):
-  #---  np.shape(frames) = (20, 384, 512) = (B, H, W)  YUV
+  #---  np.shape(frames) = (20, 384, 512) = (B, X, Y)  YUV420
   H = (frames.shape[1]*2)//3  # 384x2//3 = 256
   W = frames.shape[2]         # 512
   in_img1 = np.zeros((frames.shape[0], 6, H//2, W//2), dtype=np.uint8)
 
-  in_img1[:, 0] = frames[:, 0:H:2, 0::2]
-  in_img1[:, 1] = frames[:, 1:H:2, 0::2]
-  in_img1[:, 2] = frames[:, 0:H:2, 1::2]
-  in_img1[:, 3] = frames[:, 1:H:2, 1::2]
+  in_img1[:, 0] = frames[:, 0:H:2, 0::2]  # [2::2] get every even starting at 2
+  in_img1[:, 1] = frames[:, 1:H:2, 0::2]  # [start:end:step], [2:4:2] get every even starting at 2 and ending at 4
+  in_img1[:, 2] = frames[:, 0:H:2, 1::2]  # [1::2] get every odd index, [::2] get every even
+  in_img1[:, 3] = frames[:, 1:H:2, 1::2]  # [::n] get every n-th item in the entire sequence
   in_img1[:, 4] = frames[:, H:H+H//4].reshape((-1, H//2, W//2))
   in_img1[:, 5] = frames[:, H+H//4:H+H//2].reshape((-1, H//2, W//2))
 
   return in_img1
 '''
-np.shape(in_img1) = (20, 6, 128, 256) = (B, C, H, W) YUV420 => C = 6 ???
-RGB (256, 512, 3) = 256*512*3 bytes => YUV (384, 512) = 256*3//2*512
-= 128*512*3 = 128*256*6 bytes => C = 6 QED
+np.shape(in_img1) = (20, 6, 128, 256) = (B, c, x, y) YUV420 => C = 6 ???
+RGB (256, 512, 3) = (H, W, C)     = 256*512*3   bytes =>
+YUV (384, 512) = (X, Y) = 384*512 = 256*3/2*512 bytes = 128*512*3
+= 128*256*6 = x*y*c => c = 6 QED
+2y = Y = W, x*y*6 = x*W*3 = H*W*C/2 = H*W*3/2 => x = H/2, X = H*3/2
+[Wiki YUV] => c = 6 = 4Y + 1U + 1V => total Ys = total pixels = 256x512 =>
+256x512 (Y) + 256x512/4 (U) + 256x512/4 (V) =  256*512*3/2 bytes
+Eg: YUV (6, 6) = (X, Y) => W = Y = 6, H = X*2/3 = 4, x = 2, y = 3 => YUV (c, x, y) = (6, 2, 3)
+    RGB (H, W, C) = (4, 6, 3) => H = 4, W = 6; fr[6, 6], img.shape = (6, 2, 3)
+    img[0] = fr[0:H:2, 0::2] = fr[i, j]; i = 0, 2; j = 0, 2, 4;  shape = (2, 3)  6u
+    img[1] = fr[1:H:2, 0::2] = fr[i, j]; i = 1, 3; j = 0, 2, 4;  shape = (2, 3)  6y1
+    img[2] = fr[0:H:2, 1::2] = fr[i, j]; i = 0, 2; j = 1, 3, 5;  shape = (2, 3)  6y2
+    img[3] = fr[1:H:2, 1::2] = fr[i, j]; i = 1, 3; j = 1, 3, 5;  shape = (2, 3)  6v
+    img[4] = fr[H:H+H//4].reshape((-1, H//2, W//2))      = [1, j].reshape(2, 3)  6y3
+    img[5] = fr[H+H//4:H+H//2].reshape((-1, H//2, W//2)) = [1, j].reshape(2, 3)  6y4
+    H:H+H//4 = 4:5, H+H//4:H+H//2 = 5:6
+  #---  frames[:, H:H+H//4].shape      = (10, 64, 512)  # H:H+H//4      = 256:256+64     = 256:320
+  #---  frames[:, H+H//4:H+H//2].shape = (10, 64, 512)  # H+H//4:H+H//2 = 256+64:256+128 = 320:384
+  #---  frames[:, H:H+H//4].reshape((-1, H//2, W//2)).shape      = (10, 128, 256)
+  #---  frames[:, H+H//4:H+H//2].reshape((-1, H//2, W//2)).shape = (10, 128, 256)
+  #---  np.shape(in_img1[:, 5]) = (10, 128, 256)
+  #---  np.shape(in_img1[:, 4]) = (10, 128, 256)
+[Wiki Bayer filter]
 '''
 
-frame_tensors = frames_to_tensor(np.array(imgs_med_model)).astype(np.float32)/128.0 - 1.0   # /128.0 - 1.0?
+frame_tensors = frames_to_tensor(np.array(imgs_med_model)).astype(np.float32)/128.0 - 1.0
 #---  np.shape(np.array(imgs_med_model)) =  (20, 384, 512)
 #---  np.shape(frame_tensors) = (20, 6, 128, 256)
+# RGB: [0, 255], YUV: [0, 255]/128 - 1 = (-1, 1)
 
 state = np.zeros((1,512))
 desire = np.zeros((1,8))
