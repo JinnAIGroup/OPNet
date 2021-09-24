@@ -28,7 +28,7 @@ ValueError: Unknown loss function: custom_loss
 
 cap = cv2.VideoCapture(camerafile)
 '''
-RGB (874, 1164, 3) = (H, W, C) => big YUV = (1311, 1164) = (X, Y) =>
+BGR (874, 1164, 3) = (H, W, C) => big YUV = (1311, 1164) = (X, Y) =>
 small YUV = (384, 512) = (X, Y) => scYUV = (6, 128, 256) = (c, x, y)
 '''
 bYUVs = []
@@ -53,12 +53,12 @@ for i, img in tqdm(enumerate(bYUVs)):
   sYUVs[i] = transform_img(img, from_intr=eon_intrinsics, to_intr=medmodel_intrinsics,
                                     yuv=True, output_size=(512, 256))  # (W, H)
 '''
-input: YUV img (1311, 1164) => transform_img() => cv2.COLOR_YUV2RGB_I420
-  => RGB (874, 1164, 3) => cv2.warpPerspective) => np.clip
-  => RGB (256, 512, 3) => cv2.COLOR_RGB2YUV_I420 =>
+input: YUV img (1311, 1164) => transform_img() => cv2.COLOR_YUV2BGR_I420
+  => BGR (874, 1164, 3) => cv2.warpPerspective) => np.clip
+  => BGR (256, 512, 3) => cv2.COLOR_BGR2YUV_I420 =>
 output: YUV sYUVs[0].shape = (384, 512)  # 256*3//2 = 384
-RGB, YUV444: 3 bytes per pixel; YUV420: 6 bytes per 4 pixels [Wiki YUV]
-RGB (874, 1164, 3) = 874*1164*3 bytes => YUV (1311, 1164) = 1311*1164 = 874*3//2*1164 bytes
+BGR, YUV444: 3 bytes per pixel; YUV420: 6 bytes per 4 pixels [Wiki YUV]
+BGR (874, 1164, 3) = 874*1164*3 bytes => YUV (1311, 1164) = 1311*1164 = 874*3//2*1164 bytes
 '''
 
 def sYUVs_to_scYUVs(sYUVs):
@@ -77,14 +77,14 @@ def sYUVs_to_scYUVs(sYUVs):
   return scYUVs
 '''
 np.shape(scYUVs) = (20, 6, 128, 256) = (B, c, x, y) YUV420 => c = 6 ???
-RGB (256, 512, 3) = (H, W, C)     = 256*512*3   bytes =>
+BGR (256, 512, 3) = (H, W, C)     = 256*512*3   bytes =>
 YUV (384, 512) = (X, Y) = 384*512 = 256*3/2*512 bytes = 128*512*3
 = 128*256*6 = x*y*c => c = 6 QED
 2y = Y = W, x*y*6 = x*W*3 = H*W*C/2 = H*W*3/2 => x = H/2, X = H*3/2
 [Wiki YUV] => c = 6 = 4Y + 1U + 1V => total Ys = total pixels = 256x512 =>
 256x512 (Y) + 256x512/4 (U) + 256x512/4 (V) =  256*512*3/2 bytes
 Eg: YUV (6, 6) = (X, Y) => W = Y = 6, H = X*2/3 = 4, x = 2, y = 3 => YUV (c, x, y) = (6, 2, 3)
-    RGB (H, W, C) = (4, 6, 3) => H = 4, W = 6; fr[6, 6], scYUVs.shape = (6, 2, 3)
+    BGR (H, W, C) = (4, 6, 3) => H = 4, W = 6; fr[6, 6], scYUVs.shape = (6, 2, 3)
     scYUVs[0] = fr[0:H:2, 0::2] = fr[i, j]; i = 0, 2; j = 0, 2, 4;  shape = (2, 3)  6u
     scYUVs[1] = fr[1:H:2, 0::2] = fr[i, j]; i = 1, 3; j = 0, 2, 4;  shape = (2, 3)  6y1
     scYUVs[2] = fr[0:H:2, 1::2] = fr[i, j]; i = 0, 2; j = 1, 3, 5;  shape = (2, 3)  6y2
@@ -104,7 +104,7 @@ Eg: YUV (6, 6) = (X, Y) => W = Y = 6, H = X*2/3 = 4, x = 2, y = 3 => YUV (c, x, 
 scYUVs = sYUVs_to_scYUVs(np.array(sYUVs)).astype(np.float32)/128.0 - 1.0
 #---  np.shape(np.array(sYUVs)) =  (20, 384, 512)
 #---  np.shape(scYUVs) = (20, 6, 128, 256)
-# RGB: [0, 255], YUV: [0, 255]/128 - 1 = (-1, 1)
+# BGR: [0, 255], YUV: [0, 255]/128 - 1 = (-1, 1)
 
 state = np.zeros((1,512))
 desire = np.zeros((1,8))
