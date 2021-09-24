@@ -1,4 +1,4 @@
-'''  JLL, 2021.8.14, 9.5, 9.22
+'''  JLL, 2021.8.14, 9.5, 9.24
 Leon's main.py
 
 1. Download modeld and main.py (see https://github.com/JinnAIGroup/OPNet)
@@ -27,53 +27,56 @@ ValueError: Unknown loss function: custom_loss
 '''
 
 cap = cv2.VideoCapture(camerafile)
-imgs = []
-
+'''
+RGB (874, 1164, 3) = (H, W, C) => big YUV = (1311, 1164) = (X, Y) =>
+small YUV = (384, 512) = (X, Y) => scYUV = (6, 128, 256) = (c, x, y)
+'''
+bYUVs = []
 #for i in tqdm(range(1000)):
 for i in tqdm(range(10)):
   ret, frame = cap.read()
   #---  ret =  True
   #---  frame.shape = (874, 1164, 3) = (H, W, C) = (row, col, dep) = (axis0, axis1, axis2)
   # Total float numbers (TFNs) = 874*1164*3
-  img_yuv = cv2.cvtColor(frame, cv2.COLOR_BGR2YUV_I420)
-  imgs.append(img_yuv.reshape((874*3//2, 1164))) # 874*3//2 = 1311
+  bYUV = cv2.cvtColor(frame, cv2.COLOR_BGR2YUV_I420)
+  bYUVs.append(bYUV.reshape((874*3//2, 1164))) # 874*3//2 = 1311
   #if i==0:
-    #x = img_yuv.reshape((874*3//2, 1164))
-    #---  img_yuv.shape = (1311, 1164) # TFNs = 874*1164*3/2
+    #x = bYUV.reshape((874*3//2, 1164))
+    #---  bYUV.shape = (1311, 1164) # TFNs = 874*1164*3/2
     #---  x.shape = (1311, 1164)
 
-#---  np.shape(imgs) = (20, 1311, 1164)
-imgs_med_model = np.zeros((len(imgs), 384, 512), dtype=np.uint8) # np.uint8 = 0~255
-#---  imgs_med_model.shape = (20, 384, 512)
+#---  np.shape(bYUVs) = (20, 1311, 1164)
+sYUVs = np.zeros((len(bYUVs), 384, 512), dtype=np.uint8) # np.uint8 = 0~255
+#---  sYUVs.shape = (20, 384, 512)
 
-for i, img in tqdm(enumerate(imgs)):
-  imgs_med_model[i] = transform_img(img, from_intr=eon_intrinsics, to_intr=medmodel_intrinsics,
+for i, img in tqdm(enumerate(bYUVs)):
+  sYUVs[i] = transform_img(img, from_intr=eon_intrinsics, to_intr=medmodel_intrinsics,
                                     yuv=True, output_size=(512, 256))  # (W, H)
 '''
 input: YUV img (1311, 1164) => transform_img() => cv2.COLOR_YUV2RGB_I420
   => RGB (874, 1164, 3) => cv2.warpPerspective) => np.clip
   => RGB (256, 512, 3) => cv2.COLOR_RGB2YUV_I420 =>
-output: YUV imgs_med_model[0].shape = (384, 512)  # 256*3//2 = 384
+output: YUV sYUVs[0].shape = (384, 512)  # 256*3//2 = 384
 RGB, YUV444: 3 bytes per pixel; YUV420: 6 bytes per 4 pixels [Wiki YUV]
 RGB (874, 1164, 3) = 874*1164*3 bytes => YUV (1311, 1164) = 1311*1164 = 874*3//2*1164 bytes
 '''
 
-def frames_to_tensor(frames):
-  #---  np.shape(frames) = (20, 384, 512) = (B, X, Y)  YUV420
-  H = (frames.shape[1]*2)//3  # 384x2//3 = 256
-  W = frames.shape[2]         # 512
-  in_img1 = np.zeros((frames.shape[0], 6, H//2, W//2), dtype=np.uint8)
+def sYUVs_to_scYUVs(sYUVs):
+  #---  np.shape(sYUVs) = (20, 384, 512) = (B, X, Y)  YUV420
+  H = (sYUVs.shape[1]*2)//3  # 384x2//3 = 256
+  W = sYUVs.shape[2]         # 512
+  scYUVs = np.zeros((sYUVs.shape[0], 6, H//2, W//2), dtype=np.uint8)
 
-  in_img1[:, 0] = frames[:, 0:H:2, 0::2]  # [2::2] get every even starting at 2
-  in_img1[:, 1] = frames[:, 1:H:2, 0::2]  # [start:end:step], [2:4:2] get every even starting at 2 and ending at 4
-  in_img1[:, 2] = frames[:, 0:H:2, 1::2]  # [1::2] get every odd index, [::2] get every even
-  in_img1[:, 3] = frames[:, 1:H:2, 1::2]  # [::n] get every n-th item in the entire sequence
-  in_img1[:, 4] = frames[:, H:H+H//4].reshape((-1, H//2, W//2))
-  in_img1[:, 5] = frames[:, H+H//4:H+H//2].reshape((-1, H//2, W//2))
+  scYUVs[:, 0] = sYUVs[:, 0:H:2, 0::2]  # [2::2] get every even starting at 2
+  scYUVs[:, 1] = sYUVs[:, 1:H:2, 0::2]  # [start:end:step], [2:4:2] get every even starting at 2 and ending at 4
+  scYUVs[:, 2] = sYUVs[:, 0:H:2, 1::2]  # [1::2] get every odd index, [::2] get every even
+  scYUVs[:, 3] = sYUVs[:, 1:H:2, 1::2]  # [::n] get every n-th item in the entire sequence
+  scYUVs[:, 4] = sYUVs[:, H:H+H//4].reshape((-1, H//2, W//2))
+  scYUVs[:, 5] = sYUVs[:, H+H//4:H+H//2].reshape((-1, H//2, W//2))
 
-  return in_img1
+  return scYUVs
 '''
-np.shape(in_img1) = (20, 6, 128, 256) = (B, c, x, y) YUV420 => C = 6 ???
+np.shape(scYUVs) = (20, 6, 128, 256) = (B, c, x, y) YUV420 => c = 6 ???
 RGB (256, 512, 3) = (H, W, C)     = 256*512*3   bytes =>
 YUV (384, 512) = (X, Y) = 384*512 = 256*3/2*512 bytes = 128*512*3
 = 128*256*6 = x*y*c => c = 6 QED
@@ -81,36 +84,36 @@ YUV (384, 512) = (X, Y) = 384*512 = 256*3/2*512 bytes = 128*512*3
 [Wiki YUV] => c = 6 = 4Y + 1U + 1V => total Ys = total pixels = 256x512 =>
 256x512 (Y) + 256x512/4 (U) + 256x512/4 (V) =  256*512*3/2 bytes
 Eg: YUV (6, 6) = (X, Y) => W = Y = 6, H = X*2/3 = 4, x = 2, y = 3 => YUV (c, x, y) = (6, 2, 3)
-    RGB (H, W, C) = (4, 6, 3) => H = 4, W = 6; fr[6, 6], img.shape = (6, 2, 3)
-    img[0] = fr[0:H:2, 0::2] = fr[i, j]; i = 0, 2; j = 0, 2, 4;  shape = (2, 3)  6u
-    img[1] = fr[1:H:2, 0::2] = fr[i, j]; i = 1, 3; j = 0, 2, 4;  shape = (2, 3)  6y1
-    img[2] = fr[0:H:2, 1::2] = fr[i, j]; i = 0, 2; j = 1, 3, 5;  shape = (2, 3)  6y2
-    img[3] = fr[1:H:2, 1::2] = fr[i, j]; i = 1, 3; j = 1, 3, 5;  shape = (2, 3)  6v
-    img[4] = fr[H:H+H//4].reshape((-1, H//2, W//2))      = [1, j].reshape(2, 3)  6y3
-    img[5] = fr[H+H//4:H+H//2].reshape((-1, H//2, W//2)) = [1, j].reshape(2, 3)  6y4
+    RGB (H, W, C) = (4, 6, 3) => H = 4, W = 6; fr[6, 6], scYUVs.shape = (6, 2, 3)
+    scYUVs[0] = fr[0:H:2, 0::2] = fr[i, j]; i = 0, 2; j = 0, 2, 4;  shape = (2, 3)  6u
+    scYUVs[1] = fr[1:H:2, 0::2] = fr[i, j]; i = 1, 3; j = 0, 2, 4;  shape = (2, 3)  6y1
+    scYUVs[2] = fr[0:H:2, 1::2] = fr[i, j]; i = 0, 2; j = 1, 3, 5;  shape = (2, 3)  6y2
+    scYUVs[3] = fr[1:H:2, 1::2] = fr[i, j]; i = 1, 3; j = 1, 3, 5;  shape = (2, 3)  6v
+    scYUVs[4] = fr[H:H+H//4].reshape((-1, H//2, W//2))      = [1, j].reshape(2, 3)  6y3
+    scYUVs[5] = fr[H+H//4:H+H//2].reshape((-1, H//2, W//2)) = [1, j].reshape(2, 3)  6y4
     H:H+H//4 = 4:5, H+H//4:H+H//2 = 5:6
-  #---  frames[:, H:H+H//4].shape      = (10, 64, 512)  # H:H+H//4      = 256:256+64     = 256:320
-  #---  frames[:, H+H//4:H+H//2].shape = (10, 64, 512)  # H+H//4:H+H//2 = 256+64:256+128 = 320:384
-  #---  frames[:, H:H+H//4].reshape((-1, H//2, W//2)).shape      = (10, 128, 256)
-  #---  frames[:, H+H//4:H+H//2].reshape((-1, H//2, W//2)).shape = (10, 128, 256)
-  #---  np.shape(in_img1[:, 5]) = (10, 128, 256)
-  #---  np.shape(in_img1[:, 4]) = (10, 128, 256)
+  #---  sYUVs[:, H:H+H//4].shape      = (10, 64, 512)  # H:H+H//4      = 256:256+64     = 256:320
+  #---  sYUVs[:, H+H//4:H+H//2].shape = (10, 64, 512)  # H+H//4:H+H//2 = 256+64:256+128 = 320:384
+  #---  sYUVs[:, H:H+H//4].reshape((-1, H//2, W//2)).shape      = (10, 128, 256)
+  #---  sYUVs[:, H+H//4:H+H//2].reshape((-1, H//2, W//2)).shape = (10, 128, 256)
+  #---  np.shape(scYUVs[:, 5]) = (10, 128, 256)
+  #---  np.shape(scYUVs[:, 4]) = (10, 128, 256)
 [Wiki Bayer filter]
 '''
 
-frame_tensors = frames_to_tensor(np.array(imgs_med_model)).astype(np.float32)/128.0 - 1.0
-#---  np.shape(np.array(imgs_med_model)) =  (20, 384, 512)
-#---  np.shape(frame_tensors) = (20, 6, 128, 256)
+scYUVs = sYUVs_to_scYUVs(np.array(sYUVs)).astype(np.float32)/128.0 - 1.0
+#---  np.shape(np.array(sYUVs)) =  (20, 384, 512)
+#---  np.shape(scYUVs) = (20, 6, 128, 256)
 # RGB: [0, 255], YUV: [0, 255]/128 - 1 = (-1, 1)
 
 state = np.zeros((1,512))
 desire = np.zeros((1,8))
 
 print("#---  Input: camerafile = ", camerafile)
-print("#---  Input: np.shape(frame_tensors) = ", np.shape(frame_tensors))
+print("#---  Input: np.shape(scYUVs) = ", np.shape(scYUVs))
 
-for i in tqdm(range(len(frame_tensors) - 1)):
-  inputs = [np.vstack(frame_tensors[i:i+2])[None], desire, state]
+for i in tqdm(range(len(scYUVs) - 1)):
+  inputs = [np.vstack(scYUVs[i:i+2])[None], desire, state]
   #if i==0:
     #---  inputs[ 0 ].shape = (1, 12, 128, 256)
     #---  inputs[ 1 ].shape = (1, 8)
@@ -201,9 +204,9 @@ eon_focal_length = FOCAL = 910.0
 
   if i==0:
     #print("#---  inputs = ", inputs)
-    print("#---  frame_tensors[i:i+2].shape =", np.shape(frame_tensors[i:i+2]))
-    print("#---  np.vstack(frame_tensors[i:i+2]).shape =", np.shape(np.vstack(frame_tensors[i:i+2])))
-    print("#---  np.vstack(frame_tensors[i:i+2])[None].shape =", np.shape(np.vstack(frame_tensors[i:i+2])[None]))
+    print("#---  scYUVs[i:i+2].shape =", np.shape(scYUVs[i:i+2]))
+    print("#---  np.vstack(scYUVs[i:i+2]).shape =", np.shape(np.vstack(scYUVs[i:i+2])))
+    print("#---  np.vstack(scYUVs[i:i+2])[None].shape =", np.shape(np.vstack(scYUVs[i:i+2])[None]))
     [print("#---  inputs[", i, "].shape =", np.shape(inputs[i])) for i in range(len(inputs))]
     #print("#---  outs =", outs)
     [print("#---  outs[", i, "].shape =", np.shape(outs[i])) for i in range(len(outs))]
