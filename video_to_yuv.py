@@ -1,4 +1,4 @@
-'''  JLL, 2021.9.24
+'''  JLL, 2021.9.24, 10.2
 From Leon's main.py
 (YPN) jinn@Liu:~/YPN/Leon$ python video_to_yuv.py ./fcamera.hevc
 '''
@@ -9,10 +9,10 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 from common.transformations.camera import transform_img, eon_intrinsics
 from common.transformations.model import medmodel_intrinsics
-
 '''
-RGB (874, 1164, 3) = (H, W, C) => big YUV = (1311, 1164) = (X, Y) =>
-small YUV = (384, 512) = (X, Y) => scYUV = (6, 128, 256) = (c, x, y)
+big   RGB (874, 1164, 3) = (H, W, C) => big YUV (1311, 1164) = (X, Y) =>
+small YUV (384, 512) => scYUV (6, 128, 256) = (c, x, y) =>
+small RGB (256, 512, 3)
 '''
 def RGB_to_sYUVs(video):
   bYUVs = []
