@@ -16,7 +16,7 @@ Input:
 /home/jinn/dataB/UHD--2018-08-02--08-34-47--33/global_pose/frame_velocities
 Output:
 #---  np.shape(NradarData) = (2, 1150, 5)
-#---  np.shape(NpathData) = (2, 1150, 51)
+#---  np.shape(NpathData)  = (2, 1150, 51)
 '''
 import os
 import h5py
@@ -112,6 +112,7 @@ if __name__ == "__main__":
   print("#---  np.shape(NradarData) =", np.shape(NradarData))
   print("#---  np.shape(NpathData) =", np.shape(NpathData))
   #---  np.shape(NradarData) = (2, 1150, 5)
+  #---  np.shape(NpathData)  = (2, 1150, 51)
 
   #for vf, lf in zip(all_videos, all_logs):
   #  reader(vf, lf)
