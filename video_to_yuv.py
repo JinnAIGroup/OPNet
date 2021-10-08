@@ -1,5 +1,5 @@
 '''  JLL, 2021.9.24, 10.2
-From Leon's main.py
+From /home/jinn/YPN/Leon/main.py
 (YPN) jinn@Liu:~/YPN/Leon$ python video_to_yuv.py ./fcamera.hevc
 '''
 import sys
@@ -48,8 +48,8 @@ def sYUVs_to_CsYUVs(sYUVs):
   CsYUVs[:, 4] = sYUVs[:, H:H+H//4].reshape((-1, H//2, W//2))
   CsYUVs[:, 5] = sYUVs[:, H+H//4:H+H//2].reshape((-1, H//2, W//2))
 
-  CsYUVs = np.array(CsYUVs).astype(np.float32)/128.0 - 1.0
-  # RGB: [0, 255], YUV: [0, 255]/128 - 1 = (-1, 1)
+  CsYUVs = np.array(CsYUVs).astype(np.float32)/127.5 - 1.0
+  # RGB: [0, 255], YUV: [0, 255]/127.5 - 1 = [-1, 1]
 
   print("#---  np.shape(CsYUVs) =", np.shape(CsYUVs))
   return CsYUVs
