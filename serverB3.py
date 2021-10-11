@@ -1,23 +1,19 @@
-"""   YPL & JLL, 2021.9.24
-(YPNet) jinn@Liu:~/YPNet$ python serverB3.py
+"""   YPL & JLL, 2021.9.14-15, 10.8
+(YPN) jinn@Liu:~/YPN/OPNet$ python serverB3.py
 """
 import os
 import zmq
 import six
+import numpy
 import random
 import logging
 import argparse
-import numpy as np
-from numpy.lib.format import header_data_from_array_1_0
 from datagenB3 import datagen
+from numpy.lib.format import header_data_from_array_1_0
 
 all_dirs = os.listdir('/home/jinn/dataB')
-all_videos = ['/home/jinn/dataB/'+i+'/video.hevc' for i in all_dirs]
-#print('#---  all_videos =', all_videos)
-'''--- all_videos = [
-'/home/jinn/dataB/UHD--2018-08-02--08-34-47--32/video.hevc',
-'/home/jinn/dataB/UHD--2018-08-02--08-34-47--33/video.hevc']
-'''
+all_yuvs = ['/home/jinn/dataB/'+i+'/yuv.h5' for i in all_dirs]
+#print('#---  all_yuvs =', all_yuvs)
 
 if six.PY3:
   buffer_ = memoryview
@@ -27,12 +23,12 @@ else:
 logger = logging.getLogger(__name__)
 
 random.seed(0) # makes the random numbers predictable
-random.shuffle(all_videos)
+random.shuffle(all_yuvs)
 
 def send_arrays(socket, arrays, stop=False):
   if arrays:
     # The buffer protocol only works on contiguous arrays
-    arrays = [np.ascontiguousarray(array) for array in arrays]
+    arrays = [numpy.ascontiguousarray(array) for array in arrays]
   if stop:
     headers = {'stop': True}
     socket.send_json(headers)
@@ -52,7 +48,7 @@ def recv_arrays(socket):
   for header in headers:
     data = socket.recv()
     buf = buffer_(data)
-    array = np.frombuffer(buf, dtype=np.dtype(header['descr']))
+    array = numpy.frombuffer(buf, dtype=numpy.dtype(header['descr']))
     array.shape = header['shape']
     if header['fortran_order']:
       array.shape = header['shape'][::-1]
@@ -71,56 +67,51 @@ def client_generator(port=5557, host="localhost", hwm=20):
     data = recv_arrays(socket)
     yield tuple(data)
 
-def start_server(data_obj, port=5557, hwm=20):
+def start_server(data_stream, port=5557, hwm=20):
   logging.basicConfig(level='INFO')
   context = zmq.Context()
   socket = context.socket(zmq.PUSH)
   socket.set_hwm(hwm)
   socket.bind('tcp://*:{}'.format(port))
 
-  # it = itertools.tee(data_obj)
-  it = data_obj
-  logger.info(' #--- serverB3 started')
+  # it = itertools.tee(data_stream)
+  it = data_stream
+  logger.info('server started')
   while True:
     try:
-      data_stream = next(it)
+      data = next(it)
       stop = False
-      logger.debug("sending {} arrays".format(len(data_stream)))
+      logger.debug("sending {} arrays".format(len(data)))
     except StopIteration:
-      it = data_obj
-      data_stream = None
+      it = data_stream
+      data = None
       stop = True
       logger.debug("sending StopIteration")
 
-    print('#---serverB3  np.shape(data_stream[0]) =', np.shape(data_stream[0]))
-    print('#---serverB3  np.shape(data_stream[1]) =', np.shape(data_stream[1]))
-    #print('#---serverB3  data_stream =', data_stream)
-    send_arrays(socket, data_stream, stop=stop)
+    send_arrays(socket, data, stop=stop)
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser(description='Data Server')
   parser.add_argument('--batch', dest='batch', type=int, default=25, help='Batch size')
-  parser.add_argument('--time', dest='time', type=int, default=2, help='Number of frames per sample')
+  parser.add_argument('--time', dest='time', type=int, default=10, help='Number of frames per sample')
   parser.add_argument('--port', dest='port', type=int, default=5557, help='Port of the ZMQ server')
   parser.add_argument('--buffer', dest='buffer', type=int, default=20, help='High-water mark. Increasing this increses buffer and memory usage.')
   parser.add_argument('--validation', dest='validation', action='store_true', default=False, help='Serve validation dataset instead.')
   args, more = parser.parse_known_args()
 
-  train_len  = int(0.5*len(all_videos))
-  valid_len  = int(0.5*len(all_videos))
-  train_videos = all_videos[: train_len]
-  valid_videos = all_videos[train_len: train_len + valid_len]
-  print('#---serverB3  len(all_videos) =', len(all_videos))
-  print('#---serverB3  len(train_videos) =', len(train_videos))
-  print('#---serverB3  len(valid_videos) =', len(valid_videos))
+  train_len  = int(0.5*len(all_yuvs))
+  valid_len  = int(0.5*len(all_yuvs))
+  train_files = all_yuvs[: train_len]
+  valid_files = all_yuvs[train_len: train_len + valid_len]
+  print('#---serverB3  len(all_yuvs) =', len(all_yuvs))
+  print('#---serverB3  len(train_files) =', len(train_files))
+  print('#---serverB3  len(valid_files) =', len(valid_files))
 
   if args.validation:
-    video_files = valid_videos
+    camera_files = valid_files
   else:
-    video_files = train_videos
+    camera_files = train_files
 
-  print('#---serverB3  video_files =', video_files)
-  #---  video_files = ['/home/jinn/dataB/UHD--2018-08-02--08-34-47--32/video.hevc']
-  data_obj = datagen(video_files, max_time_len=args.time, batch_size=args.batch)
-  print('#---serverB3  np.shape(data_obj) =', np.shape(data_obj))
-  start_server(data_obj, port=args.port, hwm=args.buffer)
+  print('#---serverB3  camera_files =', camera_files)
+  data_s = datagen(camera_files, max_time_len=args.time, batch_size=args.batch)
+  start_server(data_s, port=args.port, hwm=args.buffer)
