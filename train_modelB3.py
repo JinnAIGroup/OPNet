@@ -5,9 +5,11 @@ Train Keras Functional modelB3 = UNet + Pose Net (PN) = opUNetPNB3
 1. Use OP supercombo I/O
 2. Task: Regression for Path Prediction
 3. Pose: Ego path (x, y); lead car's dRel (relative distance), yRel, vRel (velocity), aRel (acceleration), prob
-4. Ground Truth: Y_batch
+4. Ground Truth: Y_batch = (25, 112)
 5. Loss: mean squared error (mse)
-6. Input: 2 YUV images with 6 channels = (1, 12, 128, 256)
+6. Input:
+   X_batch from yuv.h: 2 YUV images with 6 channels = (1, 12, 128, 256)
+   Y_batch from pathdata.h5, radardata.h5
 7. Output: mse loss
 8. Make yuv.h5 by /home/jinn/openpilot/tools/lib/hevc2yuvh5B3.py
 
@@ -18,7 +20,7 @@ Input:
 /home/jinn/dataB/UHD--2018-08-02--08-34-47--32/yuv.h5, pathdata.h5, radardata.h5
 /home/jinn/dataB/UHD--2018-08-02--08-34-47--33/yuv.h5, pathdata.h5, radardata.h5
 Output:
-/OPNet/saved_model/opUNetPNB3_loss.npy 
+/OPNet/saved_model/opUNetPNB3_loss.npy
 """
 import os
 import h5py
