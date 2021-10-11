@@ -33,7 +33,7 @@ def RGB_to_sYUVs(video, frame_count):
 
   #for i in tqdm(range(10)):
   #for i in range(frame_count):
-  for i in range(1150):   # 1150: see /home/jinn/YPN/YPNetB/datagenB3.py
+  for i in range(1150):   # 1150: see /home/jinn/YPN/OPNet/datagenB3.py
     ret, frame = video.read()  #---  ret =  True
     #---  frame.shape = (874, 1164, 3) = (H, W, C) = (row, col, dep) = (axis0, axis1, axis2)
     bYUV = cv2.cvtColor(frame, cv2.COLOR_RGB2YUV_I420)
