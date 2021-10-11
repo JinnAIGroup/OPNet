@@ -8,8 +8,8 @@ OP PN supercombo from https://drive.google.com/file/d/1L8sWgYKtH77K6Kr3FQMETtAWe
 3. Input: 2 YUV images with 6 channels = (1, 12, 128, 256)
    #--- inputs.shape = (None, 12, 128, 256)
    #--- x0.shape = (None, 128, 256, 12)  # permutation layer
-4. Output: mse loss
-   #--- outputs.shape = (None, 128, 256, 3)
+4. Output:
+   #--- outputs.shape = (None, 112)
 Run:
 (YPN) jinn@Liu:~/YPN/OPNet$ python modelB3.py
 '''
