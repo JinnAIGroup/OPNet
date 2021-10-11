@@ -18,7 +18,7 @@ Input:
 /home/jinn/dataB/UHD--2018-08-02--08-34-47--32/yuv.h5, pathdata.h5, radardata.h5
 /home/jinn/dataB/UHD--2018-08-02--08-34-47--33/yuv.h5, pathdata.h5, radardata.h5
 Output:
-/saved_model/opUNetPNB3_loss.npy 
+/OPNet/saved_model/opUNetPNB3_loss.npy 
 """
 import os
 import h5py
