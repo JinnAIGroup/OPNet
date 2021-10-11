@@ -10,8 +10,10 @@ from tqdm import tqdm
 from common.transformations.camera import transform_img, eon_intrinsics
 from common.transformations.model import medmodel_intrinsics
 '''
-big   RGB (874, 1164, 3) = (H, W, C) => big YUV (1311, 1164) = (X, Y) =>
-small YUV (384, 512) => CsYUV (6, 128, 256) = (C, x, y) =>
+big   RGB (874, 1164, 3) = (H, W, C) => Bytes: 874x1164x3
+big   YUV (1311, 1164) = (X, Y) =>      Bytes: 874x1164x3/2 = 1311x1164
+small YUV (384, 512) =>
+    CsYUV (6, 128, 256) = (C, x, y) =>
 small RGB (256, 512, 3)
 '''
 def RGB_to_sYUVs(video):
