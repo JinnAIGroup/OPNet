@@ -1,6 +1,5 @@
 '''  JLL, 2021.9.24, 10.2, 10.9
 From /home/jinn/YPN/Leon/video_to_yuvB3.py
-
 Convert video.hevc to yuv.h5
 
 (OP082) jinn@Liu:~/openpilot/tools/lib$ python hevc2yuvh5B3.py
