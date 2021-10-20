@@ -3,7 +3,7 @@ modelA4a = DeepLabV3+
 from Keras https://keras.io/examples/vision/deeplabv3_plus/
 
 1. Task: Multiclass semantic segmentation
-2. Input:
+2. Input: Beijing U (Human Analysis)
    jpg image = (512, 512, 3); mask = (512, 512, 1); NUM_CLASSES = 20
    train_images = sorted(glob(os.path.join(DATA_DIR, "Images/*")))
    train_masks = sorted(glob(os.path.join(DATA_DIR, "Category_ids/*")))

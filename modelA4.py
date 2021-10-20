@@ -3,7 +3,7 @@ modelA4 = DeepLabV3+
 from Keras https://keras.io/examples/vision/deeplabv3_plus/
 
 1. Task: Multiclass semantic segmentation
-2. Input: Apollo
+2. Input: Apollo (Lane Segmentation)
    jpg image = (2710, 3384, 3); mask = (?, ?, 1); NUM_CLASSES = 35
    DATA_DIR_Imgs = "/home/jinn/dataAll/Apollo/lane_marking_examples/road02/ColorImage/Record001"
    DATA_DIR_Msks = "/home/jinn/dataAll/Apollo/lane_marking_examples/road02/Label/Record001"
@@ -329,12 +329,11 @@ colormap = colormap.astype(np.uint8)
 #--- Apollo
 https://github.com/ApolloScapeAuto/dataset-api
 https://github.com/ApolloScapeAuto/dataset-api/blob/master/lane_segmentation/LanemarkDiscription.pdf
-jpg image = (2710, 3384, 3); label: 35 classes
+  jpg image = (2710, 3384, 3); label: 35 classes
 
 #--- comma10k
 https://github.com/commaai/comma10k
 https://blog.comma.ai/crowdsourced-segnet-you-can-help/
-
 (YPN) jinn@Liu:~/YPN$ git clone https://github.com/commaai/comma10k.git
 
 label: 5 labels, in 3 broad classes
