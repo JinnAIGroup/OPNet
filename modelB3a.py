@@ -1,5 +1,5 @@
-'''   JLL, 2021.10.20
-Build modelB3 = UNet + Pose Net (PN) = opUNetPNB3
+'''   JLL, 2021.9.9, 9.14, 10.9, 10.13
+Build modelB3a = UNet + Pose Net (PN) = opUNetPNB3
 UNet from https://keras.io/examples/vision/oxford_pets_image_segmentation/
 OP PN supercombo from https://drive.google.com/file/d/1L8sWgYKtH77K6Kr3FQMETtAWeQNyyb8R/view
 
@@ -21,6 +21,7 @@ def UNet(x0, num_classes):
 
     # Entry block
     x = layers.Conv2D(32, 3, strides=2, padding="same")(x0)
+    x = layers.BatchNormalization()(x)
     x = layers.Activation("relu")(x)
 
     previous_block_activation = x  # Set aside residual
@@ -28,10 +29,12 @@ def UNet(x0, num_classes):
     # Blocks 1, 2, 3 are identical apart from the feature depth.
     for filters in [64]:
         x = layers.Activation("relu")(x)
-        x = layers.Conv2D(filters, 3, padding="same")(x)
+        x = layers.SeparableConv2D(filters, 3, padding="same")(x)
+        x = layers.BatchNormalization()(x)
 
         x = layers.Activation("relu")(x)
-        x = layers.Conv2D(filters, 3, padding="same")(x)
+        x = layers.SeparableConv2D(filters, 3, padding="same")(x)
+        x = layers.BatchNormalization()(x)
 
         x = layers.MaxPooling2D(3, strides=2, padding="same")(x)
 
@@ -53,8 +56,11 @@ def UNet(x0, num_classes):
         x = layers.Conv2DTranspose(filters, 3, padding="same")(x)
         x = layers.BatchNormalization()(x)
 
+        x = layers.UpSampling2D(2)(x)
+
         # Project residual
-        residual = layers.Conv2D(filters, 1, padding="same")(previous_block_activation)
+        residual = layers.UpSampling2D(2)(previous_block_activation)
+        residual = layers.Conv2D(filters, 1, padding="same")(residual)
         x = layers.add([x, residual])  # Add back residual
         previous_block_activation = x  # Set aside next residual
 
@@ -65,14 +71,20 @@ def UNet(x0, num_classes):
     x = layers.BatchNormalization()(x)
     x = layers.Activation("relu")(x)
     x = layers.Conv2D(32, 1, strides=2, padding="same")(x)
+    x = layers.BatchNormalization()(x)
     x = layers.Activation("relu")(x)
     x = layers.Conv2D(64, 1, strides=2, padding="same")(x)
+    x = layers.BatchNormalization()(x)
     x = layers.Activation("relu")(x)
     x = layers.Conv2D(128, 1, strides=2, padding="same")(x)
+    x = layers.BatchNormalization()(x)
     x = layers.Activation("relu")(x)
     x = layers.Conv2D(64, 1, strides=2, padding="same")(x)
+    x = layers.BatchNormalization()(x)
     x = layers.Activation("relu")(x)
     x = layers.Conv2D(32, 1, strides=2, padding="same")(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.Activation("relu")(x)
     x = layers.Activation("relu")(x)
     x = layers.Flatten()(x)
 
@@ -110,7 +122,11 @@ if __name__=="__main__":
     model = get_model(img_shape, num_classes)
     model.summary()
 '''
-By Tom OK for dlc
+10.19 by Tom: the following two lines failed to convert the model to dlc.
+up_sampling2d_1 (UpSampling2D)  (None, 64, 128, 64)  0           add[0][0]
+__________________________________________________________________________________________________
+up_sampling2d (UpSampling2D)    (None, 64, 128, 64)  0           batch_normalization_4[0][0]
+---
 
 Model: "functional_1"
 __________________________________________________________________________________________________
@@ -122,71 +138,93 @@ permute (Permute)               (None, 128, 256, 12) 0           input_1[0][0]
 __________________________________________________________________________________________________
 conv2d (Conv2D)                 (None, 64, 128, 32)  3488        permute[0][0]
 __________________________________________________________________________________________________
-activation (Activation)         (None, 64, 128, 32)  0           conv2d[0][0]
+batch_normalization (BatchNorma (None, 64, 128, 32)  128         conv2d[0][0]
+__________________________________________________________________________________________________
+activation (Activation)         (None, 64, 128, 32)  0           batch_normalization[0][0]
 __________________________________________________________________________________________________
 activation_1 (Activation)       (None, 64, 128, 32)  0           activation[0][0]
 __________________________________________________________________________________________________
-conv2d_1 (Conv2D)               (None, 64, 128, 64)  18496       activation_1[0][0]
+separable_conv2d (SeparableConv (None, 64, 128, 64)  2400        activation_1[0][0]
 __________________________________________________________________________________________________
-activation_2 (Activation)       (None, 64, 128, 64)  0           conv2d_1[0][0]
+batch_normalization_1 (BatchNor (None, 64, 128, 64)  256         separable_conv2d[0][0]
 __________________________________________________________________________________________________
-conv2d_2 (Conv2D)               (None, 64, 128, 64)  36928       activation_2[0][0]
+activation_2 (Activation)       (None, 64, 128, 64)  0           batch_normalization_1[0][0]
 __________________________________________________________________________________________________
-max_pooling2d (MaxPooling2D)    (None, 32, 64, 64)   0           conv2d_2[0][0]
+separable_conv2d_1 (SeparableCo (None, 64, 128, 64)  4736        activation_2[0][0]
 __________________________________________________________________________________________________
-conv2d_3 (Conv2D)               (None, 32, 64, 64)   2112        activation[0][0]
+batch_normalization_2 (BatchNor (None, 64, 128, 64)  256         separable_conv2d_1[0][0]
+__________________________________________________________________________________________________
+max_pooling2d (MaxPooling2D)    (None, 32, 64, 64)   0           batch_normalization_2[0][0]
+__________________________________________________________________________________________________
+conv2d_1 (Conv2D)               (None, 32, 64, 64)   2112        activation[0][0]
 __________________________________________________________________________________________________
 add (Add)                       (None, 32, 64, 64)   0           max_pooling2d[0][0]
-                                                                 conv2d_3[0][0]
+                                                                 conv2d_1[0][0]
 __________________________________________________________________________________________________
 activation_3 (Activation)       (None, 32, 64, 64)   0           add[0][0]
 __________________________________________________________________________________________________
 conv2d_transpose (Conv2DTranspo (None, 32, 64, 64)   36928       activation_3[0][0]
 __________________________________________________________________________________________________
-batch_normalization (BatchNorma (None, 32, 64, 64)   256         conv2d_transpose[0][0]
+batch_normalization_3 (BatchNor (None, 32, 64, 64)   256         conv2d_transpose[0][0]
 __________________________________________________________________________________________________
-activation_4 (Activation)       (None, 32, 64, 64)   0           batch_normalization[0][0]
+activation_4 (Activation)       (None, 32, 64, 64)   0           batch_normalization_3[0][0]
 __________________________________________________________________________________________________
 conv2d_transpose_1 (Conv2DTrans (None, 32, 64, 64)   36928       activation_4[0][0]
 __________________________________________________________________________________________________
-batch_normalization_1 (BatchNor (None, 32, 64, 64)   256         conv2d_transpose_1[0][0]
+batch_normalization_4 (BatchNor (None, 32, 64, 64)   256         conv2d_transpose_1[0][0]
 __________________________________________________________________________________________________
-conv2d_4 (Conv2D)               (None, 32, 64, 64)   4160        add[0][0]
+up_sampling2d_1 (UpSampling2D)  (None, 64, 128, 64)  0           add[0][0]
 __________________________________________________________________________________________________
-add_1 (Add)                     (None, 32, 64, 64)   0           batch_normalization_1[0][0]
-                                                                 conv2d_4[0][0]
+up_sampling2d (UpSampling2D)    (None, 64, 128, 64)  0           batch_normalization_4[0][0]
 __________________________________________________________________________________________________
-conv2d_5 (Conv2D)               (None, 32, 64, 3)    1731        add_1[0][0]
+conv2d_2 (Conv2D)               (None, 64, 128, 64)  4160        up_sampling2d_1[0][0]
 __________________________________________________________________________________________________
-batch_normalization_2 (BatchNor (None, 32, 64, 3)    12          conv2d_5[0][0]
+add_1 (Add)                     (None, 64, 128, 64)  0           up_sampling2d[0][0]
+                                                                 conv2d_2[0][0]
 __________________________________________________________________________________________________
-activation_5 (Activation)       (None, 32, 64, 3)    0           batch_normalization_2[0][0]
+conv2d_3 (Conv2D)               (None, 64, 128, 3)   1731        add_1[0][0]
 __________________________________________________________________________________________________
-conv2d_6 (Conv2D)               (None, 16, 32, 32)   128         activation_5[0][0]
+batch_normalization_5 (BatchNor (None, 64, 128, 3)   12          conv2d_3[0][0]
 __________________________________________________________________________________________________
-activation_6 (Activation)       (None, 16, 32, 32)   0           conv2d_6[0][0]
+activation_5 (Activation)       (None, 64, 128, 3)   0           batch_normalization_5[0][0]
 __________________________________________________________________________________________________
-conv2d_7 (Conv2D)               (None, 8, 16, 64)    2112        activation_6[0][0]
+conv2d_4 (Conv2D)               (None, 32, 64, 32)   128         activation_5[0][0]
 __________________________________________________________________________________________________
-activation_7 (Activation)       (None, 8, 16, 64)    0           conv2d_7[0][0]
+batch_normalization_6 (BatchNor (None, 32, 64, 32)   128         conv2d_4[0][0]
 __________________________________________________________________________________________________
-conv2d_8 (Conv2D)               (None, 4, 8, 128)    8320        activation_7[0][0]
+activation_6 (Activation)       (None, 32, 64, 32)   0           batch_normalization_6[0][0]
 __________________________________________________________________________________________________
-activation_8 (Activation)       (None, 4, 8, 128)    0           conv2d_8[0][0]
+conv2d_5 (Conv2D)               (None, 16, 32, 64)   2112        activation_6[0][0]
 __________________________________________________________________________________________________
-conv2d_9 (Conv2D)               (None, 2, 4, 64)     8256        activation_8[0][0]
+batch_normalization_7 (BatchNor (None, 16, 32, 64)   256         conv2d_5[0][0]
 __________________________________________________________________________________________________
-activation_9 (Activation)       (None, 2, 4, 64)     0           conv2d_9[0][0]
+activation_7 (Activation)       (None, 16, 32, 64)   0           batch_normalization_7[0][0]
 __________________________________________________________________________________________________
-conv2d_10 (Conv2D)              (None, 1, 2, 32)     2080        activation_9[0][0]
+conv2d_6 (Conv2D)               (None, 8, 16, 128)   8320        activation_7[0][0]
 __________________________________________________________________________________________________
-activation_10 (Activation)      (None, 1, 2, 32)     0           conv2d_10[0][0]
+batch_normalization_8 (BatchNor (None, 8, 16, 128)   512         conv2d_6[0][0]
 __________________________________________________________________________________________________
-flatten (Flatten)               (None, 64)           0           activation_10[0][0]
+activation_8 (Activation)       (None, 8, 16, 128)   0           batch_normalization_8[0][0]
 __________________________________________________________________________________________________
-dense (Dense)                   (None, 64)           4160        flatten[0][0]
+conv2d_7 (Conv2D)               (None, 4, 8, 64)     8256        activation_8[0][0]
 __________________________________________________________________________________________________
-dense_1 (Dense)                 (None, 64)           4160        flatten[0][0]
+batch_normalization_9 (BatchNor (None, 4, 8, 64)     256         conv2d_7[0][0]
+__________________________________________________________________________________________________
+activation_9 (Activation)       (None, 4, 8, 64)     0           batch_normalization_9[0][0]
+__________________________________________________________________________________________________
+conv2d_8 (Conv2D)               (None, 2, 4, 32)     2080        activation_9[0][0]
+__________________________________________________________________________________________________
+batch_normalization_10 (BatchNo (None, 2, 4, 32)     128         conv2d_8[0][0]
+__________________________________________________________________________________________________
+activation_10 (Activation)      (None, 2, 4, 32)     0           batch_normalization_10[0][0]
+__________________________________________________________________________________________________
+activation_11 (Activation)      (None, 2, 4, 32)     0           activation_10[0][0]
+__________________________________________________________________________________________________
+flatten (Flatten)               (None, 256)          0           activation_11[0][0]
+__________________________________________________________________________________________________
+dense (Dense)                   (None, 64)           16448       flatten[0][0]
+__________________________________________________________________________________________________
+dense_1 (Dense)                 (None, 64)           16448       flatten[0][0]
 __________________________________________________________________________________________________
 dense_2 (Dense)                 (None, 56)           3640        dense[0][0]
 __________________________________________________________________________________________________
@@ -195,7 +233,6 @@ ________________________________________________________________________________
 concatenate (Concatenate)       (None, 112)          0           dense_2[0][0]
                                                                  dense_3[0][0]
 ==================================================================================================
-Total params: 177,791
-Trainable params: 177,529
-Non-trainable params: 262
+Total params: 155,999
+Trainable params: 154,777
 '''
