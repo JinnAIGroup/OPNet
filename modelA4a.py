@@ -17,7 +17,7 @@ from Keras https://keras.io/examples/vision/deeplabv3_plus/
      binary mask: one-hot encoded tensor = (512, 512, 20)
      visualize: RGB segmentation masks (each pixel by a unique color corresponding
        to each predicted label from the human_colormap.mat file)
-4. Run: (YPN) jinn@Liu:~/YPN/DeepLab$ python modelA4.py
+4. Run: (YPN) jinn@Liu:~/YPN/DeepLab$ python modelA4a.py
 '''
 import os
 import cv2
