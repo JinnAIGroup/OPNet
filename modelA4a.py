@@ -1,19 +1,20 @@
-'''   JLL, 2021.10.19-20
-modelA4 = DeepLabV3+
+'''   JLL, 2021.10.16-18
+modelA4a = DeepLabV3+
 from Keras https://keras.io/examples/vision/deeplabv3_plus/
 
 1. Task: Multiclass semantic segmentation
-2. Input: Apollo
-   jpg image = (2710, 3384, 3); mask = (?, ?, 1); NUM_CLASSES = 35
-   DATA_DIR_Imgs = "/home/jinn/dataAll/Apollo/lane_marking_examples/road02/ColorImage/Record001"
-   DATA_DIR_Msks = "/home/jinn/dataAll/Apollo/lane_marking_examples/road02/Label/Record001"
+2. Input:
+   jpg image = (512, 512, 3); mask = (512, 512, 1); NUM_CLASSES = 20
+   train_images = sorted(glob(os.path.join(DATA_DIR, "Images/*")))
+   train_masks = sorted(glob(os.path.join(DATA_DIR, "Category_ids/*")))
+   val_masks = sorted(glob(os.path.join(DATA_DIR, "Category_ids/*")))
 3. Output:
    plt.title("Training Loss")
    plt.title("Training Accuracy")
    plt.title("Validation Loss")
    plt.title("Validation Accuracy")
    plot_predictions(train_images[:4], colormap, model=model)
-     binary mask: one-hot encoded tensor = (?, ?, ?)
+     binary mask: one-hot encoded tensor = (512, 512, 20)
      visualize: RGB segmentation masks (each pixel by a unique color corresponding
        to each predicted label from the human_colormap.mat file)
 4. Run: (YPN) jinn@Liu:~/YPN/DeepLab$ python modelA4.py
@@ -29,25 +30,20 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
 
-#print('#--- train_images =', train_images)
-    #print('#--- image_tensor.shape =', image_tensor.shape)
-
 IMAGE_SIZE = 512
 BATCH_SIZE = 4
 NUM_CLASSES = 20
-#DATA_DIR = "./instance-level_human_parsing/instance-level_human_parsing/Training"
-DATA_DIR_Imgs = "/home/jinn/dataAll/Apollo/lane_marking_examples/road02/ColorImage/Record001"
-DATA_DIR_Msks = "/home/jinn/dataAll/Apollo/lane_marking_examples/road02/Label/Record001"
-NUM_TRAIN_IMAGES = 8  #1000
-NUM_VAL_IMAGES = 4  #50
+DATA_DIR = "./instance-level_human_parsing/instance-level_human_parsing/Training"
+NUM_TRAIN_IMAGES = 10  #1000
+NUM_VAL_IMAGES = 5  #50
 EPOCHS = 2 #25
 
-train_images = sorted(glob(os.path.join(DATA_DIR_Imgs, "Camera5/*")))[:NUM_TRAIN_IMAGES]
-train_masks = sorted(glob(os.path.join(DATA_DIR_Msks, "Camera5/*")))[:NUM_TRAIN_IMAGES]
-val_images = sorted(glob(os.path.join(DATA_DIR_Imgs, "Camera5/*")))[
+train_images = sorted(glob(os.path.join(DATA_DIR, "Images/*")))[:NUM_TRAIN_IMAGES]
+train_masks = sorted(glob(os.path.join(DATA_DIR, "Category_ids/*")))[:NUM_TRAIN_IMAGES]
+val_images = sorted(glob(os.path.join(DATA_DIR, "Images/*")))[
     NUM_TRAIN_IMAGES : NUM_VAL_IMAGES + NUM_TRAIN_IMAGES
 ]
-val_masks = sorted(glob(os.path.join(DATA_DIR_Msks, "Camera5/*")))[
+val_masks = sorted(glob(os.path.join(DATA_DIR, "Category_ids/*")))[
     NUM_TRAIN_IMAGES : NUM_VAL_IMAGES + NUM_TRAIN_IMAGES
 ]
 #--- CS1
@@ -154,7 +150,6 @@ def DeeplabV3Plus(image_size, num_classes):
 model = DeeplabV3Plus(image_size=IMAGE_SIZE, num_classes=NUM_CLASSES)
 model.summary()
 
-'''
 loss = keras.losses.SparseCategoricalCrossentropy(from_logits=True)
 model.compile(
     optimizer=keras.optimizers.Adam(learning_rate=0.001),
@@ -253,6 +248,8 @@ def plot_predictions(images_list, colormap, model):
 
 plot_predictions(train_images[:3], colormap, model=model)
 
+'''
+    #print('#--- image_tensor.shape =', image_tensor.shape)
 #--- CS1
 a = ("b", "g", "a", "d", "f", "c", "h", "e")
 x = sorted(a)
@@ -325,45 +322,4 @@ colormap = colormap.astype(np.uint8)
   np.save('scripts/gt.npy', gt_masks)
 /home/jinn/yolact/train.py
   images, targets, masks, num_crowds = prepare_data(datum)
-
-#--- Apollo
-https://github.com/ApolloScapeAuto/dataset-api
-https://github.com/ApolloScapeAuto/dataset-api/blob/master/lane_segmentation/LanemarkDiscription.pdf
-jpg image = (2710, 3384, 3); label: 35 classes
-
-#--- comma10k
-https://github.com/commaai/comma10k
-https://blog.comma.ai/crowdsourced-segnet-you-can-help/
-
-(YPN) jinn@Liu:~/YPN$ git clone https://github.com/commaai/comma10k.git
-
-label: 5 labels, in 3 broad classes
-  Moves with scene — Road, Lane Markings, Undrivable (including sky)
-  Moves themselves — Movable (like vehicles, pedestrians, etc…)
-  Moves with you — My car (and anything inside it)
-
-imgs/  -- The PNG image files
-masks/ -- PNG segmentation masks (update these!)
-imgs2/  -- New PNG image files paired with fisheye PNGs
-masks2/ -- PNG segmentation masks (update these!)
-
-Categories of internal segnet
- 1 - #402020 - road (all parts, anywhere nobody would look at you funny for driving)
- 2 - #ff0000 - lane markings (don't include non lane markings like turn arrows and crosswalks)
- 3 - #808060 - undrivable
- 4 - #00ff66 - movable (vehicles and people/animals)
- 5 - #cc00ff - my car (and anything inside it, including wires, mounts, etc. No reflections)
-
-https://github.com/YassineYousfi/comma10k-baseline
-  Using U-Net with efficientnet encoder, this baseline reaches 0.044 validation loss.
-  This baseline uses two stages (i) 437x582 (ii) 874x1164 (full resolution)
-  python3 train_lit_model.py --backbone efficientnet-b4 --version first-stage --gpus 2 --batch-size 28 --epochs 100 --height 437 --width 582
-  python3 train_lit_model.py --backbone efficientnet-b4 --version second-stage --gpus 2 --batch-size 7 --learning-rate 5e-5 --epochs 30 --height 874 --width 1164 --augmentation-level hard --seed-from-checkpoint .../efficientnet-b4/first-stage/checkpoints/last.ckpt
-
-https://github.com/qubvel/segmentation_models.pytorch
-  High level API (just two lines to create a neural network)
-  9 models architectures for binary and multi class segmentation (including legendary Unet)
-  113 available encoders
-  All encoders have pre-trained weights for faster and better convergence
-
 '''
