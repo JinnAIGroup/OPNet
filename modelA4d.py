@@ -1,6 +1,7 @@
-'''   JLL, 2021.10.19-20
-modelA4c = DeepLabV3+
-from Keras https://keras.io/examples/vision/deeplabv3_plus/
+'''   JLL, 2021.10.21
+modelA4d = U-Net + efficientnet encoder (smp.Unet(self.backbone))
+from modelA4c + https://github.com/YassineYousfi +
+pytorch smp: https://github.com/qubvel/segmentation_models.pytorch
 2. Input: comma10k
 
 1. Task: Multiclass semantic segmentation
@@ -18,11 +19,6 @@ from Keras https://keras.io/examples/vision/deeplabv3_plus/
      visualize: RGB segmentation masks (each pixel by a unique color corresponding
        to each predicted label from the human_colormap.mat file)
 4. Run: (YPN) jinn@Liu:~/YPN/DeepLab$ python modelA4.py
-
-ValueError: A `Concatenate` layer requires inputs with matching shapes except
-for the concat axis. Got inputs shapes: [(None, 165, 219, 256), (None, 219, 291, 48)]
-  File "modelA4.py", line 151, in DeeplabV3Plus
-    x = layers.Concatenate(axis=-1)([input_a, input_b])
 '''
 import os
 import cv2
@@ -59,7 +55,7 @@ val_masks = sorted(glob(os.path.join(DATA_DIR_Msks, "*")))[
     NUM_TRAIN_IMAGES : NUM_VAL_IMAGES + NUM_TRAIN_IMAGES
 ]
 #--- CS1
-print('#--- train_images =', train_images)
+#print('#--- train_images =', train_images)
 
 def read_image(image_path, mask=False):
     image = tf.io.read_file(image_path)
@@ -162,7 +158,7 @@ def DeeplabV3Plus(image_h, image_w, num_classes):
     return keras.Model(inputs=model_input, outputs=model_output)
 
 model = DeeplabV3Plus(image_h=IMAGE_H, image_w=IMAGE_W, num_classes=NUM_CLASSES)
-#model.summary()
+model.summary()
 
 '''
 loss = keras.losses.SparseCategoricalCrossentropy(from_logits=True)
@@ -375,13 +371,4 @@ https://github.com/qubvel/segmentation_models.pytorch
   113 available encoders
   All encoders have pre-trained weights for faster and better convergence
 
-#--- train_images = [
-'/home/jinn/dataAll/comma10k/imgs/0000_0085e9e41513078a_2018-08-19--13-26-08_11_864.png',
-'/home/jinn/dataAll/comma10k/imgs/0001_a23b0de0bc12dcba_2018-06-24--00-29-19_17_79.png',
-'/home/jinn/dataAll/comma10k/imgs/0002_e8e95b54ed6116a6_2018-09-05--22-04-33_2_608.png',
-'/home/jinn/dataAll/comma10k/imgs/0003_97a4ec76e41e8853_2018-09-29--22-46-37_5_585.png',
-'/home/jinn/dataAll/comma10k/imgs/0004_2ac95059f70d76eb_2018-05-12--17-46-52_56_371.png',
-'/home/jinn/dataAll/comma10k/imgs/0005_836d09212ac1b8fa_2018-06-15--15-57-15_23_345.png',
-'/home/jinn/dataAll/comma10k/imgs/0006_0c5c849415c7dba2_2018-08-12--10-26-26_5_1159.png',
-'/home/jinn/dataAll/comma10k/imgs/0007_b5e785c1fc446ed0_2018-06-14--08-27-35_78_873.png']
 '''
