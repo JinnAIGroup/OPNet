@@ -1,4 +1,4 @@
-'''   JLL, 2021.10.16-18
+'''   JLL, 2021.10.16-18, 10.28
 modelA4a = DeepLabV3+
 from Keras https://keras.io/examples/vision/deeplabv3_plus/
 2. Input: Beijing U (Human Analysis)
