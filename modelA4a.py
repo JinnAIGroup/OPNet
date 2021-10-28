@@ -99,7 +99,7 @@ def convolution_block(
         dilation_rate=dilation_rate,
         padding="same",
         use_bias=use_bias,
-        kernel_initializer=keras.initializers.HeNormal(),
+        kernel_initializer=keras.initializers.HeNormal(),  # https://prateekvishnu.medium.com/xavier-and-he-normal-he-et-al-initialization-8e3d7a087528
     )(block_input)
     x = layers.BatchNormalization()(x)
     return tf.nn.relu(x)
