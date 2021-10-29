@@ -2,12 +2,12 @@
 modelA4c = DeepLabV3+
 from Keras https://keras.io/examples/vision/deeplabv3_plus/
 2. Input: comma10k
-
-1. Task: Multiclass semantic segmentation
    png imgs = (H, W, C) = (874, 1164, 3); masks = (874, 1164, 1);  imgs2 = (1208, 1928, 3);
    NUM_CLASSES = 5
    DATA_DIR_Imgs = "/home/jinn/dataAll/comma10k/imgs"
    DATA_DIR_Msks = "/home/jinn/dataAll/comma10k/masks"
+
+1. Task: Multiclass semantic segmentation
 3. Output:
    plt.title("Training Loss")
    plt.title("Training Accuracy")
