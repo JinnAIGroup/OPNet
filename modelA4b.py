@@ -2,11 +2,11 @@
 modelA4b = DeepLabV3+
 from Keras https://keras.io/examples/vision/deeplabv3_plus/
 2. Input: Apollo (Lane Segmentation)
-
-1. Task: Multiclass semantic segmentation
    jpg image = (2710, 3384, 3); mask = (?, ?, 1); NUM_CLASSES = 35
    DATA_DIR_Imgs = "/home/jinn/dataAll/Apollo/lane_marking_examples/road02/ColorImage/Record001"
    DATA_DIR_Msks = "/home/jinn/dataAll/Apollo/lane_marking_examples/road02/Label/Record001"
+
+1. Task: Multiclass semantic segmentation
 3. Output:
    plt.title("Training Loss")
    plt.title("Training Accuracy")
