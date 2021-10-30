@@ -1,13 +1,15 @@
-'''   JLL, 2021.10.16-18, 10.28
-modelA4a = DeepLabV3+
-from Keras https://keras.io/examples/vision/deeplabv3_plus/
-2. Input: Beijing U (Human Analysis)
+'''   JLL, 2021.10.16-18
+modelA4a = DeepLabV3+ (dilated convolution + ResNet50 + imagenet)
+Keras DeepLabV3+ https://keras.io/examples/vision/deeplabv3_plus/
+Input data: Beijing U (Human Analysis)
+
+1. Task: Multiclass semantic segmentation
    jpg image = (512, 512, 3); mask = (512, 512, 1); NUM_CLASSES = 20
    train_images = sorted(glob(os.path.join(DATA_DIR, "Images/*")))
    train_masks = sorted(glob(os.path.join(DATA_DIR, "Category_ids/*")))
    val_masks = sorted(glob(os.path.join(DATA_DIR, "Category_ids/*")))
-
-1. Task: Multiclass semantic segmentation
+2. Input:
+   /home/jinn/YPN/DeepLab/instance-level_human_parsing/instance-level_human_parsing/Training
 3. Output:
    plt.title("Training Loss")
    plt.title("Training Accuracy")

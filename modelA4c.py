@@ -1,14 +1,15 @@
 '''   JLL, 2021.10.19-20
-modelA4b = DeepLabV3+ (dilated convolution + ResNet50 + imagenet)
+modelA4c = DeepLabV3+ (dilated convolution + ResNet50 + imagenet)
 Keras DeepLabV3+ https://keras.io/examples/vision/deeplabv3_plus/
-ApolloScape http://apolloscape.auto/
-Input data: ApolloScape (Lane Segmentation)
+comma10k https://github.com/commaai/comma10k
+Input data: comma10k (png)
+png imgs = (H, W, C) = (874, 1164, 3); masks = (874, 1164, 1);  imgs2 = (1208, 1928, 3);
 
 1. Task: Multiclass semantic segmentation
-2. Input: Apollo (Lane Segmentation)
-   jpg image = (2710, 3384, 3); mask = (?, ?, 1); NUM_CLASSES = 35
-   DATA_DIR_Imgs = "/home/jinn/dataAll/Apollo/lane_marking_examples/road02/ColorImage/Record001"
-   DATA_DIR_Msks = "/home/jinn/dataAll/Apollo/lane_marking_examples/road02/Label/Record001"
+   NUM_CLASSES = 5
+2. Input:
+   Imgs = /home/jinn/dataAll/comma10k/imgs/*.png
+   Msks = /home/jinn/dataAll/comma10k/masks/*.png
 3. Output:
    plt.title("Training Loss")
    plt.title("Training Accuracy")
@@ -18,7 +19,12 @@ Input data: ApolloScape (Lane Segmentation)
      binary mask: one-hot encoded tensor = (?, ?, ?)
      visualize: RGB segmentation masks (each pixel by a unique color corresponding
        to each predicted label from the human_colormap.mat file)
-4. Run: (YPN) jinn@Liu:~/YPN/DeepLab$ python modelA4b.py
+4. Run: (YPN) jinn@Liu:~/YPN/DeepLab$ python modelA4.py
+
+ValueError: A `Concatenate` layer requires inputs with matching shapes except
+for the concat axis. Got inputs shapes: [(None, 165, 219, 256), (None, 219, 291, 48)]
+  File "modelA4.py", line 151, in DeeplabV3Plus
+    x = layers.Concatenate(axis=-1)([input_a, input_b])
 '''
 import os
 import cv2
@@ -31,39 +37,42 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
 
-#print('#--- train_images =', train_images)
     #print('#--- image_tensor.shape =', image_tensor.shape)
 
-IMAGE_SIZE = 512
+# tf.image.resize: images 3-D Tensor of shape [height, width, channels]
+#IMAGE_SIZE = 512
+IMAGE_H = 874
+IMAGE_W = 1164
 BATCH_SIZE = 4
 NUM_CLASSES = 20
 #DATA_DIR = "./instance-level_human_parsing/instance-level_human_parsing/Training"
-DATA_DIR_Imgs = "/home/jinn/dataAll/Apollo/lane_marking_examples/road02/ColorImage/Record001"
-DATA_DIR_Msks = "/home/jinn/dataAll/Apollo/lane_marking_examples/road02/Label/Record001"
+DATA_DIR_Imgs = "/home/jinn/dataAll/comma10k/imgs"
+DATA_DIR_Msks = "/home/jinn/dataAll/comma10k/masks"
 NUM_TRAIN_IMAGES = 8  #1000
 NUM_VAL_IMAGES = 4  #50
 EPOCHS = 2 #25
 
-train_images = sorted(glob(os.path.join(DATA_DIR_Imgs, "Camera5/*")))[:NUM_TRAIN_IMAGES]
-train_masks = sorted(glob(os.path.join(DATA_DIR_Msks, "Camera5/*")))[:NUM_TRAIN_IMAGES]
-val_images = sorted(glob(os.path.join(DATA_DIR_Imgs, "Camera5/*")))[
+train_images = sorted(glob(os.path.join(DATA_DIR_Imgs, "*")))[:NUM_TRAIN_IMAGES]
+train_masks = sorted(glob(os.path.join(DATA_DIR_Msks, "*")))[:NUM_TRAIN_IMAGES]
+val_images = sorted(glob(os.path.join(DATA_DIR_Imgs, "*")))[
     NUM_TRAIN_IMAGES : NUM_VAL_IMAGES + NUM_TRAIN_IMAGES
 ]
-val_masks = sorted(glob(os.path.join(DATA_DIR_Msks, "Camera5/*")))[
+val_masks = sorted(glob(os.path.join(DATA_DIR_Msks, "*")))[
     NUM_TRAIN_IMAGES : NUM_VAL_IMAGES + NUM_TRAIN_IMAGES
 ]
 #--- CS1
+print('#--- train_images =', train_images)
 
 def read_image(image_path, mask=False):
     image = tf.io.read_file(image_path)
     if mask:
         image = tf.image.decode_png(image, channels=1)
         image.set_shape([None, None, 1])
-        image = tf.image.resize(images=image, size=[IMAGE_SIZE, IMAGE_SIZE])
+        image = tf.image.resize(images=image, size=[IMAGE_H, IMAGE_W])
     else:
         image = tf.image.decode_png(image, channels=3)
         image.set_shape([None, None, 3])
-        image = tf.image.resize(images=image, size=[IMAGE_SIZE, IMAGE_SIZE])
+        image = tf.image.resize(images=image, size=[IMAGE_H, IMAGE_W])
         image = image / 127.5 - 1
     return image
 
@@ -127,8 +136,8 @@ def DilatedSpatialPyramidPooling(dspp_input):
     output = convolution_block(x, kernel_size=1)
     return output
 
-def DeeplabV3Plus(image_size, num_classes):
-    model_input = keras.Input(shape=(image_size, image_size, 3))
+def DeeplabV3Plus(image_h, image_w, num_classes):
+    model_input = keras.Input(shape=(image_h, image_w, 3))
     resnet50 = keras.applications.ResNet50(
         weights="imagenet", include_top=False, input_tensor=model_input
     )
@@ -136,26 +145,28 @@ def DeeplabV3Plus(image_size, num_classes):
     x = DilatedSpatialPyramidPooling(x)
 
     input_a = layers.UpSampling2D(
-        size=(image_size // 4 // x.shape[1], image_size // 4 // x.shape[2]),
+        size=(image_h // 4 // x.shape[1], image_w // 4 // x.shape[2]),
         interpolation="bilinear",
     )(x)
     input_b = resnet50.get_layer("conv2_block3_2_relu").output
     input_b = convolution_block(input_b, num_filters=48, kernel_size=1)
 
     x = layers.Concatenate(axis=-1)([input_a, input_b])
+      # [input_a.shape, input_b.shape] = [(None, 165, 219, 256), (None, 219, 291, 48)]
     x = convolution_block(x)
     x = convolution_block(x)
     x = layers.UpSampling2D(
-        size=(image_size // x.shape[1], image_size // x.shape[2]),
+        size=(image_h // x.shape[1], image_w // x.shape[2]),
         interpolation="bilinear",
     )(x)
 
     model_output = layers.Conv2D(num_classes, kernel_size=(1, 1), padding="same")(x)
     return keras.Model(inputs=model_input, outputs=model_output)
 
-model = DeeplabV3Plus(image_size=IMAGE_SIZE, num_classes=NUM_CLASSES)
-model.summary()
+model = DeeplabV3Plus(image_h=IMAGE_H, image_w=IMAGE_W, num_classes=NUM_CLASSES)
+#model.summary()
 
+'''
 loss = keras.losses.SparseCategoricalCrossentropy(from_logits=True)
 model.compile(
     optimizer=keras.optimizers.Adam(learning_rate=0.001),
@@ -163,7 +174,6 @@ model.compile(
     metrics=["accuracy"],
 )
 
-'''
 history = model.fit(train_dataset, validation_data=val_dataset, epochs=EPOCHS)
 
 plt.plot(history.history["loss"])
@@ -367,4 +377,13 @@ https://github.com/qubvel/segmentation_models.pytorch
   113 available encoders
   All encoders have pre-trained weights for faster and better convergence
 
+#--- train_images = [
+'/home/jinn/dataAll/comma10k/imgs/0000_0085e9e41513078a_2018-08-19--13-26-08_11_864.png',
+'/home/jinn/dataAll/comma10k/imgs/0001_a23b0de0bc12dcba_2018-06-24--00-29-19_17_79.png',
+'/home/jinn/dataAll/comma10k/imgs/0002_e8e95b54ed6116a6_2018-09-05--22-04-33_2_608.png',
+'/home/jinn/dataAll/comma10k/imgs/0003_97a4ec76e41e8853_2018-09-29--22-46-37_5_585.png',
+'/home/jinn/dataAll/comma10k/imgs/0004_2ac95059f70d76eb_2018-05-12--17-46-52_56_371.png',
+'/home/jinn/dataAll/comma10k/imgs/0005_836d09212ac1b8fa_2018-06-15--15-57-15_23_345.png',
+'/home/jinn/dataAll/comma10k/imgs/0006_0c5c849415c7dba2_2018-08-12--10-26-26_5_1159.png',
+'/home/jinn/dataAll/comma10k/imgs/0007_b5e785c1fc446ed0_2018-06-14--08-27-35_78_873.png']
 '''
