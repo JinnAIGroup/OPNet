@@ -1,7 +1,9 @@
 '''  JLL, 2021.10.29
-From /home/jinn/openpilot/tools/lib/hevc2yuvh5A4.py
+From /home/jinn/openpilot/tools/lib/hevc2yuvh5B3.py
 Convert .png to .h5 for modelA4
 
+Create folder /home/jinn/dataAll/comma10k/Ximgs (with two png files) and
+ empty folder /home/jinn/dataAll/comma10k/Ximgs_yuv for debugging first
 Create an empty folder /home/jinn/dataAll/comma10k/imgs_yuv
 (OP082) jinn@Liu:~/openpilot/tools/lib$ python hevc2yuvh5A4.py
 Input:
@@ -58,8 +60,8 @@ def sYUV_to_CsYUV(sYUV):
     return CsYUV
 
 def makeYUV(all_dirs):   # len(all_pngs) = 9888
-    #all_pngs = ['/home/jinn/dataAll/comma10k/Ximgs/'+i for i in all_dirs]   # debug
-    all_pngs = ['/home/jinn/dataAll/comma10k/imgs/'+i for i in all_dirs]
+    all_pngs = ['/home/jinn/dataAll/comma10k/Ximgs/'+i for i in all_dirs]   # debug
+    #all_pngs = ['/home/jinn/dataAll/comma10k/imgs/'+i for i in all_dirs]
     print('#---  len(all_pngs) =', len(all_pngs))
     for png in all_pngs:
       yuvh5 = png.replace('.png','_yuv.h5')
@@ -97,6 +99,6 @@ def makeYUV(all_dirs):   # len(all_pngs) = 9888
           #print("#---  yuvh5f['X'][0]    =", yuvh5f['X'][0])
 
 if __name__ == "__main__":
-    #all_dirs = os.listdir('/home/jinn/dataAll/comma10k/Ximgs')   # debug
-    all_dirs = os.listdir('/home/jinn/dataAll/comma10k/imgs')
+    all_dirs = os.listdir('/home/jinn/dataAll/comma10k/Ximgs')   # debug
+    #all_dirs = os.listdir('/home/jinn/dataAll/comma10k/imgs')
     makeYUV(all_dirs)
