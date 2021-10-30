@@ -1,6 +1,6 @@
 '''  JLL, 2021.10.29
 From /home/jinn/openpilot/tools/lib/hevc2yuvh5B3.py
-Convert .png to .h5 for modelA4
+Convert .png to .h5 for modelA4e
 
 Create folder /home/jinn/dataAll/comma10k/Ximgs (with two png files) and
  empty folder /home/jinn/dataAll/comma10k/Ximgs_yuv for debugging first
