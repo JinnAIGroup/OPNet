@@ -19,7 +19,7 @@ png imgs = (H, W, C) = (874, 1164, 3); masks = (874, 1164, 1);  imgs2 = (1208, 1
      binary mask: one-hot encoded tensor = (?, ?, ?)
      visualize: RGB segmentation masks (each pixel by a unique color corresponding
        to each predicted label from the human_colormap.mat file)
-4. Run: (YPN) jinn@Liu:~/YPN/DeepLab$ python modelA4.py
+4. Run: (YPN) jinn@Liu:~/YPN/DeepLab$ python modelA4c.py
 
 ValueError: A `Concatenate` layer requires inputs with matching shapes except
 for the concat axis. Got inputs shapes: [(None, 165, 219, 256), (None, 219, 291, 48)]
