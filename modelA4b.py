@@ -1,6 +1,6 @@
 '''   JLL, 2021.10.19-20
 modelA4b = DeepLabV3+ (dilated convolution + ResNet50 + imagenet)
-Keras DeepLabV3+ https://keras.io/examples/vision/deeplabv3_plus/
+DeepLabV3+ https://keras.io/examples/vision/deeplabv3_plus/
 ApolloScape http://apolloscape.auto/
 Input data: ApolloScape (Lane Segmentation)
 

@@ -1,6 +1,6 @@
 '''   JLL, 2021.10.16-18
 modelA4a = DeepLabV3+ (dilated convolution + ResNet50 + imagenet)
-Keras DeepLabV3+ https://keras.io/examples/vision/deeplabv3_plus/
+DeepLabV3+ https://keras.io/examples/vision/deeplabv3_plus/
 Input data: Beijing U (Human Analysis)
 
 1. Task: Multiclass semantic segmentation

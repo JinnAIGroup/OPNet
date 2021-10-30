@@ -1,6 +1,6 @@
 '''   JLL, 2021.10.19-20
 modelA4c = DeepLabV3+ (dilated convolution + ResNet50 + imagenet)
-Keras DeepLabV3+ https://keras.io/examples/vision/deeplabv3_plus/
+DeepLabV3+ https://keras.io/examples/vision/deeplabv3_plus/
 comma10k https://github.com/commaai/comma10k
 Input data: comma10k (png)
 png imgs = (H, W, C) = (874, 1164, 3); masks = (874, 1164, 1);  imgs2 = (1208, 1928, 3);
