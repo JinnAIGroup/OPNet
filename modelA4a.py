@@ -1,7 +1,7 @@
 '''   JLL, 2021.10.16-18, 10.31
 modelA4a = DeepLabV3+: Pretrained ResNet50 (imagenet) + dilated convolution
 DeepLabV3+ https://keras.io/examples/vision/deeplabv3_plus/
-Beijing U data (Human Analysis): *.png (512, 512, 3) = (H, W, C)
+Beijing U data (Human Analysis):
    imgs: *.png (512, 512, 3) = (H, W, C)
   masks: *.png (512, 512, 1)
 
