@@ -1,16 +1,18 @@
-'''   JLL, 2021.10.19-20
+'''   JLL, 2021.10.19-20, 10.31
 modelA4c = DeepLabV3+ (dilated convolution + ResNet50 + imagenet)
 DeepLabV3+ https://keras.io/examples/vision/deeplabv3_plus/
-comma10k https://github.com/commaai/comma10k
-Input data: comma10k (png)
-png imgs = (H, W, C) = (874, 1164, 3); masks = (874, 1164, 1);  imgs2 = (1208, 1928, 3);
+comma10k data:
+   imgs: *.png (874, 1164, 3) = (H, W, C)
+  masks: *.png (874, 1164, 1)
+modelA4a I/O
 
-1. Task: Multiclass semantic segmentation
+1. Get comma10k data and code: $ git clone https://github.com/commaai/comma10k.git
+2. Task: Multiclass semantic segmentation
    NUM_CLASSES = 5
-2. Input:
+3. Input:
    Imgs = /home/jinn/dataAll/comma10k/imgs/*.png
    Msks = /home/jinn/dataAll/comma10k/masks/*.png
-3. Output:
+4. Output:
    plt.title("Training Loss")
    plt.title("Training Accuracy")
    plt.title("Validation Loss")
@@ -19,7 +21,7 @@ png imgs = (H, W, C) = (874, 1164, 3); masks = (874, 1164, 1);  imgs2 = (1208, 1
      binary mask: one-hot encoded tensor = (?, ?, ?)
      visualize: RGB segmentation masks (each pixel by a unique color corresponding
        to each predicted label from the human_colormap.mat file)
-4. Run: (YPN) jinn@Liu:~/YPN/DeepLab$ python modelA4c.py
+6. Run: (YPN) jinn@Liu:~/YPN/DeepLab$ python modelA4c.py
 
 ValueError: A `Concatenate` layer requires inputs with matching shapes except
 for the concat axis. Got inputs shapes: [(None, 165, 219, 256), (None, 219, 291, 48)]

@@ -1,16 +1,20 @@
-'''   JLL, 2021.10.16-18
-modelA4a = DeepLabV3+ (dilated convolution + ResNet50 + imagenet)
+'''   JLL, 2021.10.16-18, 10.31
+modelA4a = DeepLabV3+: Pretrained ResNet50 (imagenet) + dilated convolution
 DeepLabV3+ https://keras.io/examples/vision/deeplabv3_plus/
-Input data: Beijing U (Human Analysis)
+Beijing U data (Human Analysis): *.png (512, 512, 3) = (H, W, C)
+   imgs: *.png (512, 512, 3) = (H, W, C)
+  masks: *.png (512, 512, 1)
 
-1. Task: Multiclass semantic segmentation
+1. Copy, paste, read, and run of the Keras DeepLabV3+ code block-by-block to modelA4a.py
+2. Download data: https://drive.google.com/uc?id=1B9A9UCJYMwTL4oBEo4RZfbMZMaZhKJaz
+3. Task: Multiclass semantic segmentation
    jpg image = (512, 512, 3); mask = (512, 512, 1); NUM_CLASSES = 20
    train_images = sorted(glob(os.path.join(DATA_DIR, "Images/*")))
    train_masks = sorted(glob(os.path.join(DATA_DIR, "Category_ids/*")))
    val_masks = sorted(glob(os.path.join(DATA_DIR, "Category_ids/*")))
-2. Input:
+4. Input:
    /home/jinn/YPN/DeepLab/instance-level_human_parsing/instance-level_human_parsing/Training
-3. Output:
+5. Output:
    plt.title("Training Loss")
    plt.title("Training Accuracy")
    plt.title("Validation Loss")
@@ -19,7 +23,7 @@ Input data: Beijing U (Human Analysis)
      binary mask: one-hot encoded tensor = (512, 512, 20)
      visualize: RGB segmentation masks (each pixel by a unique color corresponding
        to each predicted label from the human_colormap.mat file)
-4. Run: (YPN) jinn@Liu:~/YPN/DeepLab$ python modelA4a.py
+6. Run: (YPN) jinn@Liu:~/YPN/DeepLab$ python modelA4a.py
 '''
 import os
 import cv2

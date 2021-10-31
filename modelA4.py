@@ -1,14 +1,30 @@
-'''   JLL, 2021.10.19-20
-modelA4c = DeepLabV3+
-from Keras https://keras.io/examples/vision/deeplabv3_plus/
-2. Input: comma10k
-   png imgs = (H, W, C) = (874, 1164, 3); masks = (874, 1164, 1);  imgs2 = (1208, 1928, 3);
-   NUM_CLASSES = 5
-   DATA_DIR_Imgs = "/home/jinn/dataAll/comma10k/imgs"
-   DATA_DIR_Msks = "/home/jinn/dataAll/comma10k/masks"
+'''   JLL, 2021.10.31
+modelA4e = DeepLabV3+: Pretrained ResNet50 (imagenet) + dilated convolution
+DeepLabV3+ (see modelA4a) https://keras.io/examples/vision/deeplabv3_plus/
+comma10k data:
+   imgs: *.png => hevc2yuvh5A4.py => CsYUV (6, 128, 256) = (C, H, W) => *_yuv.h5
+  masks: ToDo
+modelB3 I/O
 
-1. Task: Multiclass semantic segmentation
-3. Output:
+1. Get comma10k data and code: $ git clone https://github.com/commaai/comma10k.git
+2. Make *_yuv.h5 by /home/jinn/openpilot/tools/lib/hevc2yuvh5A4.py
+3. Input:
+   Imgs = /home/jinn/dataAll/comma10k/imgs/*.png
+   YUV  = /home/jinn/dataAll/comma10k/imgs_yuv/*.h5
+   Msks = /home/jinn/dataAll/comma10k/masks/*.png
+   png RGB imgs = (H, W, C) = (874, 1164, 3); masks = (874, 1164, 1);  imgs2 = (1208, 1928, 3);
+
+   One-to-One RGB-YUV Mapping Theorem: Given YUV bytes = RGB bytes/2, we have
+   sRGB   (256,  512, 3) <=> sYUV   (384,  512) <=>  CsYUV (6, 128,  256) [key:  384 =  256x3/2]
+   bRGB   (874, 1164, 3) <=> bYUV  (1311, 1164) <=>  CbYUV (6, 291,  582) [key: 1311 =  874x3/2]
+   bRGB2 (1208, 1928, 3) <=> bYUV2 (1812, 1928) <=> CbYUV2 (6, 964, 1928) [key: 1812 = 1208x3/2]
+
+   2 YUV images with 6 channels = (1, 12, 128, 256)
+   Find: RGB: 874/2 = 437 => ? (one contraction)
+         YUV: 128/2 = 64/2 = 32/2 = 16/2 = 8/2 = 4/2 = 2/2 (7 contractions)
+   Conclusion: must use YUV input
+4. Task: Multiclass semantic segmentation: NUM_CLASSES = 5
+5. Output:
    plt.title("Training Loss")
    plt.title("Training Accuracy")
    plt.title("Validation Loss")
@@ -17,12 +33,7 @@ from Keras https://keras.io/examples/vision/deeplabv3_plus/
      binary mask: one-hot encoded tensor = (?, ?, ?)
      visualize: RGB segmentation masks (each pixel by a unique color corresponding
        to each predicted label from the human_colormap.mat file)
-4. Run: (YPN) jinn@Liu:~/YPN/DeepLab$ python modelA4.py
-
-ValueError: A `Concatenate` layer requires inputs with matching shapes except
-for the concat axis. Got inputs shapes: [(None, 165, 219, 256), (None, 219, 291, 48)]
-  File "modelA4.py", line 151, in DeeplabV3Plus
-    x = layers.Concatenate(axis=-1)([input_a, input_b])
+6. Run: (YPN) jinn@Liu:~/YPN/DeepLab$ python modelA4.py
 '''
 import os
 import cv2
@@ -42,7 +53,7 @@ from tensorflow.keras import layers
 IMAGE_H = 874
 IMAGE_W = 1164
 BATCH_SIZE = 4
-NUM_CLASSES = 20
+NUM_CLASSES = 5
 #DATA_DIR = "./instance-level_human_parsing/instance-level_human_parsing/Training"
 DATA_DIR_Imgs = "/home/jinn/dataAll/comma10k/imgs"
 DATA_DIR_Msks = "/home/jinn/dataAll/comma10k/masks"
@@ -98,41 +109,67 @@ val_dataset = data_generator(val_images, val_masks)
 print("Train Dataset:", train_dataset)
 print("Val Dataset:", val_dataset)
 
-def convolution_block(
-    block_input,
-    num_filters=256,
-    kernel_size=3,
-    dilation_rate=1,
-    padding="same",
-    use_bias=False,
-):
-    x = layers.Conv2D(
-        num_filters,
-        kernel_size=kernel_size,
-        dilation_rate=dilation_rate,
-        padding="same",
-        use_bias=use_bias,
-        kernel_initializer=keras.initializers.HeNormal(),
-    )(block_input)
+def UNet(x0, num_classes):
+    ### [First half of the network: contraction and feature extraction] ###
+
+    # Entry block
+    x = layers.Conv2D(32, 3, strides=2, padding="same")(x0)
+    x = layers.Activation("relu")(x)
+
+    previous_block_activation = x  # Set aside residual
+
+    # Blocks 1, 2, 3 are identical apart from the feature depth.
+    for filters in [64]:
+        x = layers.Activation("relu")(x)
+        x = layers.Conv2D(filters, 3, padding="same")(x)
+
+        x = layers.Activation("relu")(x)
+        x = layers.Conv2D(filters, 3, padding="same")(x)
+
+        x = layers.MaxPooling2D(3, strides=2, padding="same")(x)
+
+        # Project residual
+        residual = layers.Conv2D(filters, 1, strides=2, padding="same")(
+            previous_block_activation
+        )
+        x = layers.add([x, residual])  # Add back residual
+        previous_block_activation = x  # Set aside next residual
+
+    ### [Second half of the network: expansion and upsampling] ###
+
+    for filters in [64]:
+        x = layers.Activation("relu")(x)
+        x = layers.Conv2DTranspose(filters, 3, padding="same")(x)
+        x = layers.BatchNormalization()(x)
+
+        x = layers.Activation("relu")(x)
+        x = layers.Conv2DTranspose(filters, 3, padding="same")(x)
+        x = layers.BatchNormalization()(x)
+
+        # Project residual
+        residual = layers.Conv2D(filters, 1, padding="same")(previous_block_activation)
+        x = layers.add([x, residual])  # Add back residual
+        previous_block_activation = x  # Set aside next residual
+
+    # Add a per-pixel classification layer (UNet final layer)
+    x = layers.Conv2D(num_classes, 3, activation="softmax", padding="same")(x)
+
+    # Add layers for PN
     x = layers.BatchNormalization()(x)
-    return tf.nn.relu(x)
+    x = layers.Activation("relu")(x)
+    x = layers.Conv2D(32, 1, strides=2, padding="same")(x)
+    x = layers.Activation("relu")(x)
+    x = layers.Conv2D(64, 1, strides=2, padding="same")(x)
+    x = layers.Activation("relu")(x)
+    x = layers.Conv2D(128, 1, strides=2, padding="same")(x)
+    x = layers.Activation("relu")(x)
+    x = layers.Conv2D(64, 1, strides=2, padding="same")(x)
+    x = layers.Activation("relu")(x)
+    x = layers.Conv2D(32, 1, strides=2, padding="same")(x)
+    x = layers.Activation("relu")(x)
+    x = layers.Flatten()(x)
 
-def DilatedSpatialPyramidPooling(dspp_input):
-    dims = dspp_input.shape
-    x = layers.AveragePooling2D(pool_size=(dims[-3], dims[-2]))(dspp_input)
-    x = convolution_block(x, kernel_size=1, use_bias=True)
-    out_pool = layers.UpSampling2D(
-        size=(dims[-3] // x.shape[1], dims[-2] // x.shape[2]), interpolation="bilinear",
-    )(x)
-
-    out_1 = convolution_block(dspp_input, kernel_size=1, dilation_rate=1)
-    out_6 = convolution_block(dspp_input, kernel_size=3, dilation_rate=6)
-    out_12 = convolution_block(dspp_input, kernel_size=3, dilation_rate=12)
-    out_18 = convolution_block(dspp_input, kernel_size=3, dilation_rate=18)
-
-    x = layers.Concatenate(axis=-1)([out_pool, out_1, out_6, out_12, out_18])
-    output = convolution_block(x, kernel_size=1)
-    return output
+    return x
 
 def DeeplabV3Plus(image_h, image_w, num_classes):
     model_input = keras.Input(shape=(image_h, image_w, 3))
@@ -140,19 +177,29 @@ def DeeplabV3Plus(image_h, image_w, num_classes):
         weights="imagenet", include_top=False, input_tensor=model_input
     )
     x = resnet50.get_layer("conv4_block6_2_relu").output
+      #print('#---3 x.shape[1], x.shape[2] =', x.shape[1], x.shape[2])
+      #---3 x.shape[1], x.shape[2] = 55 73
     x = DilatedSpatialPyramidPooling(x)
 
+      #print('#---4 x.shape[1], x.shape[2] =', x.shape[1], x.shape[2])
+      #---4 x.shape[1], x.shape[2] = 55 73
     input_a = layers.UpSampling2D(
         size=(image_h // 4 // x.shape[1], image_w // 4 // x.shape[2]),
+        # input_a.shape = (None, 165, 219, 256)
         interpolation="bilinear",
     )(x)
     input_b = resnet50.get_layer("conv2_block3_2_relu").output
+      #print('#---5 input_b.shape[1], input_b.shape[2] =', input_b.shape[1], input_b.shape[2])
+      #---5 input_b.shape[1], input_b.shape[2] = 219 291
     input_b = convolution_block(input_b, num_filters=48, kernel_size=1)
+      #print('#---6 input_b.shape[1], input_b.shape[2] =', input_b.shape[1], input_b.shape[2])
+      #---6 input_b.shape[1], input_b.shape[2] = 219 291
 
     x = layers.Concatenate(axis=-1)([input_a, input_b])
       # [input_a.shape, input_b.shape] = [(None, 165, 219, 256), (None, 219, 291, 48)]
     x = convolution_block(x)
     x = convolution_block(x)
+    print('#---4 x.shape[1], x.shape[2] =', x.shape[1], x.shape[2])
     x = layers.UpSampling2D(
         size=(image_h // x.shape[1], image_w // x.shape[2]),
         interpolation="bilinear",
