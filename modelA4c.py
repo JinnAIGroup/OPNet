@@ -7,8 +7,7 @@ comma10k data:
 modelA4a I/O
 
 1. Get comma10k data and code: $ git clone https://github.com/commaai/comma10k.git
-2. Task: Multiclass semantic segmentation
-   NUM_CLASSES = 5
+2. Task: Multiclass semantic segmentation (NUM_CLASSES = 5)
 3. Input:
    Imgs = /home/jinn/dataAll/comma10k/imgs/*.png
    Msks = /home/jinn/dataAll/comma10k/masks/*.png

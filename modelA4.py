@@ -23,7 +23,7 @@ modelB3 I/O
    Find: RGB: 874/2 = 437 => ? (one contraction)
          YUV: 128/2 = 64/2 = 32/2 = 16/2 = 8/2 = 4/2 = 2/2 (7 contractions)
    Conclusion: must use YUV input
-4. Task: Multiclass semantic segmentation: NUM_CLASSES = 5
+4. Task: Multiclass semantic segmentation (NUM_CLASSES = 5)
 5. Output:
    plt.title("Training Loss")
    plt.title("Training Accuracy")

@@ -7,9 +7,9 @@ ApolloScape data (Lane Segmentation): *.png
   masks: *.png (874, 1164, 1)
 modelA4a I/O
 
-1. Task: Multiclass semantic segmentation
+1. Task: Multiclass semantic segmentation (NUM_CLASSES = 35)
 2. Input: Apollo (Lane Segmentation)
-   jpg image = (2710, 3384, 3); mask = (?, ?, 1); NUM_CLASSES = 35
+   jpg image = (2710, 3384, 3); mask = (?, ?, 1)
    DATA_DIR_Imgs = "/home/jinn/dataAll/Apollo/lane_marking_examples/road02/ColorImage/Record001"
    DATA_DIR_Msks = "/home/jinn/dataAll/Apollo/lane_marking_examples/road02/Label/Record001"
 3. Output:
