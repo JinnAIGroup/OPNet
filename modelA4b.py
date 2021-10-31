@@ -2,7 +2,7 @@
 modelA4b = DeepLabV3+ (dilated convolution + ResNet50 + imagenet)
 DeepLabV3+ https://keras.io/examples/vision/deeplabv3_plus/
 ApolloScape http://apolloscape.auto/
-ApolloScape data (Lane Segmentation): *.png
+ApolloScape data (Lane Segmentation):
    imgs: *.png (2710, 3384, 3) = (H, W, C)
   masks: *.png (874, 1164, 1)
 modelA4a I/O
