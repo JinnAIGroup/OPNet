@@ -1,5 +1,5 @@
 '''   JLL, 2021.9.9, 9.14, 10.9
-Build modelB3A = opUNetB3A
+modelA3x = UNet
 UNet from https://keras.io/examples/vision/oxford_pets_image_segmentation/
 OP supercombo from https://drive.google.com/file/d/1L8sWgYKtH77K6Kr3FQMETtAWeQNyyb8R/view
 
@@ -11,7 +11,7 @@ OP supercombo from https://drive.google.com/file/d/1L8sWgYKtH77K6Kr3FQMETtAWeQNy
 4. Output: num_classes = 3
    #--- outputs.shape = (None, 128, 256, 3)
 Run:
-(YPN) jinn@Liu:~/YPN/OPNet$ python modelB3A.py
+(YPN) jinn@Liu:~/YPN/OPNet$ python modelA3x.py
 '''
 from tensorflow import keras
 from tensorflow.keras import layers
