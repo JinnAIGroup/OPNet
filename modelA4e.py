@@ -1,18 +1,18 @@
 '''   JLL, 2021.10.31
-modelA4 = UNet (modelA3x)
+modelA4e = DeepLabV3+: Pretrained ResNet50 (imagenet) + dilated convolution
+DeepLabV3+ (see modelA4a) https://keras.io/examples/vision/deeplabv3_plus/
 comma10k data:
-   imgs: RGB *.png (874, 1164, 3) = (H, W, C) => hevc2yuvh5A4.py =>
-             CsYUV (6, 128, 256) = (C, H, W) => *_yuv.h5
+   imgs: *.png => hevc2yuvh5A4.py => CsYUV (6, 128, 256) = (C, H, W) => *_yuv.h5
   masks: ToDo
+modelB3 I/O
 
 1. Get comma10k data and code: $ git clone https://github.com/commaai/comma10k.git
 2. Make *_yuv.h5 by /home/jinn/openpilot/tools/lib/hevc2yuvh5A4.py
 3. Input:
+   Imgs = /home/jinn/dataAll/comma10k/imgs/*.png
    YUV  = /home/jinn/dataAll/comma10k/imgs_yuv/*.h5
    Msks = /home/jinn/dataAll/comma10k/masks/*.png
-
-   mask = (874, 1164, 1);  imgs2 = (1208, 1928, 3)
-   Imgs = /home/jinn/dataAll/comma10k/imgs/*.png
+   png RGB imgs = (H, W, C) = (874, 1164, 3); masks = (874, 1164, 1);  imgs2 = (1208, 1928, 3);
 
    One-to-One RGB-YUV Mapping Theorem: Given YUV bytes = RGB bytes/2, we have
    sRGB   (256,  512, 3) <=> sYUV   (384,  512) <=>  CsYUV (6, 128,  256) [key:  384 =  256x3/2]
@@ -33,21 +33,12 @@ comma10k data:
      binary mask: one-hot encoded tensor = (?, ?, ?)
      visualize: RGB segmentation masks (each pixel by a unique color corresponding
        to each predicted label from the human_colormap.mat file)
-6. Run: (YPN) jinn@Liu:~/YPN/DeepLab$ python modelA4.py
+6. Run: (YPN) jinn@Liu:~/YPN/DeepLab$ python modelA4e.py
 
-ValueError: Input 0 of layer conv2d is incompatible with the layer: expected axis -1 of
-input shape to have value 12 but received input with shape [1, 256, 3, 128]
-
-Solution?
-ToDo: Use train_modelB3.py I/O method:
-Run:
-(YPN) jinn@Liu:~/YPN/OPNet$ python serverB3.py
-(YPN) jinn@Liu:~/YPN/OPNet$ python train_modelB3.py
-Input:
-/home/jinn/dataB/UHD--2018-08-02--08-34-47--32/yuv.h5, pathdata.h5, radardata.h5
-/home/jinn/dataB/UHD--2018-08-02--08-34-47--33/yuv.h5, pathdata.h5, radardata.h5
-Output:
-/OPNet/saved_model/opUNetPNB3_loss.npy
+  File "modelA4.py", line 154, in DeeplabV3Plus
+    resnet50 = keras.applications.ResNet50(
+ File "/home/jinn/.pyenv/versions/YPN/lib/python3.8/site-packages/tensorflow/python/keras/applications/resnet.py", line 474, in ResNet50
+ValueError: Shapes (7, 7, 6, 64) and (64, 3, 7, 7) are incompatible   # input of resnet50 cannot be yuv imgs => no transfer learning
 '''
 import os
 import cv2
@@ -62,8 +53,7 @@ from tensorflow.keras import layers
     #print('#--- image_tensor.shape =', image_tensor.shape)
 IMAGE_H = 128
 IMAGE_W = 256
-IMG_SHAPE = (6, IMAGE_H, IMAGE_W)
-BATCH_SIZE = 1
+BATCH_SIZE = 4
 NUM_CLASSES = 5
 DATA_DIR_Imgs = "/home/jinn/dataAll/comma10k/imgs_yuv"
 DATA_DIR_Msks = "/home/jinn/dataAll/comma10k/masks"
@@ -119,75 +109,89 @@ val_dataset = data_generator(val_images, val_masks)
 print("Train Dataset:", train_dataset)
 print("Val Dataset:", val_dataset)
 
-def UNet(x0, num_classes):
-    ### [First half of the network: contracting resolution] ###
-
-    # Entry block
-    x = layers.Conv2D(32, 3, strides=2, padding="same")(x0)
+def convolution_block(
+    block_input,
+    num_filters=256,
+    kernel_size=3,
+    dilation_rate=1,
+    padding="same",
+    use_bias=False,
+):
+    x = layers.Conv2D(
+        num_filters,
+        kernel_size=kernel_size,
+        dilation_rate=dilation_rate,
+        padding="same",
+        use_bias=use_bias,
+        kernel_initializer=keras.initializers.HeNormal(),  # https://prateekvishnu.medium.com/xavier-and-he-normal-he-et-al-initialization-8e3d7a087528
+    )(block_input)
     x = layers.BatchNormalization()(x)
-    x = layers.Activation("relu")(x)
+    return tf.nn.relu(x)
 
-    previous_block_activation = x  # Set aside residual
+def DilatedSpatialPyramidPooling(dspp_input):
+    dims = dspp_input.shape
+    x = layers.AveragePooling2D(pool_size=(dims[-3], dims[-2]))(dspp_input)
+    x = convolution_block(x, kernel_size=1, use_bias=True)
+    out_pool = layers.UpSampling2D(
+        size=(dims[-3] // x.shape[1], dims[-2] // x.shape[2]), interpolation="bilinear",
+    )(x)
 
-    # Blocks 1, 2, 3 are identical apart from the feature depth.
-    for filters in [64, 128, 256]:
-        x = layers.Activation("relu")(x)
-        x = layers.SeparableConv2D(filters, 3, padding="same")(x)
-        x = layers.BatchNormalization()(x)
+    out_1 = convolution_block(dspp_input, kernel_size=1, dilation_rate=1)
+    out_6 = convolution_block(dspp_input, kernel_size=3, dilation_rate=6)
+    out_12 = convolution_block(dspp_input, kernel_size=3, dilation_rate=12)
+    out_18 = convolution_block(dspp_input, kernel_size=3, dilation_rate=18)
 
-        x = layers.Activation("relu")(x)
-        x = layers.SeparableConv2D(filters, 3, padding="same")(x)
-        x = layers.BatchNormalization()(x)
+    x = layers.Concatenate(axis=-1)([out_pool, out_1, out_6, out_12, out_18])
+    output = convolution_block(x, kernel_size=1)
+    return output
 
-        x = layers.MaxPooling2D(3, strides=2, padding="same")(x)
+def DeeplabV3Plus(img_chnl, image_h, image_w, num_classes):
+    #model_input = keras.Input(shape=(img_chnl, image_h, image_w))
+    model_input = keras.Input(shape=(image_h, image_w, img_chnl))
+      #print('#---1 model_input.shape =', model_input.shape)
+      #---1 model_input.shape = (None, 6, 128, 256)
+    #x0 = layers.Permute((2, 3, 1))(model_input)
+    resnet50 = keras.applications.ResNet50(
+        #weights="imagenet", include_top=False, input_tensor=x0
+        weights="imagenet", include_top=False, input_tensor=model_input
+    )
+    x = resnet50.get_layer("conv4_block6_2_relu").output
+    print('#---3 x.shape[1], x.shape[2] =', x.shape[1], x.shape[2])
+    #---3 x.shape[1], x.shape[2] = 55 73
+    x = DilatedSpatialPyramidPooling(x)
 
-        # Project residual
-        residual = layers.Conv2D(filters, 1, strides=2, padding="same")(
-            previous_block_activation
-        )
-        x = layers.add([x, residual])  # Add back residual
-        previous_block_activation = x  # Set aside next residual
+    print('#---4 x.shape[1], x.shape[2] =', x.shape[1], x.shape[2])
+    #---4 x.shape[1], x.shape[2] = 55 73
+    input_a = layers.UpSampling2D(
+        size=(image_h // 4 // x.shape[1], image_w // 4 // x.shape[2]),
+        # input_a.shape = (None, 165, 219, 256)
+        interpolation="bilinear",
+    )(x)
+    input_b = resnet50.get_layer("conv2_block3_2_relu").output
+    print('#---5 input_b.shape[1], input_b.shape[2] =', input_b.shape[1], input_b.shape[2])
+    #---5 input_b.shape[1], input_b.shape[2] = 219 291
+    input_b = convolution_block(input_b, num_filters=48, kernel_size=1)
+    print('#---6 input_b.shape[1], input_b.shape[2] =', input_b.shape[1], input_b.shape[2])
+    #---6 input_b.shape[1], input_b.shape[2] = 219 291
 
-    ### [Second half of the network: expanding resolution] ###
+    x = layers.Concatenate(axis=-1)([input_a, input_b])
+      # [input_a.shape, input_b.shape] = [(None, 165, 219, 256), (None, 219, 291, 48)]
+    x = convolution_block(x)
+    x = convolution_block(x)
+    print('#---4 x.shape[1], x.shape[2] =', x.shape[1], x.shape[2])
+    x = layers.UpSampling2D(
+        size=(image_h // x.shape[1], image_w // x.shape[2]),
+        interpolation="bilinear",
+    )(x)
 
-    for filters in [256, 128, 64, 32]:
-        x = layers.Activation("relu")(x)
-        x = layers.Conv2DTranspose(filters, 3, padding="same")(x)
-        x = layers.BatchNormalization()(x)
+    model_output = layers.Conv2D(num_classes, kernel_size=(1, 1), padding="same")(x)
+    return keras.Model(inputs=model_input, outputs=model_output)
 
-        x = layers.Activation("relu")(x)
-        x = layers.Conv2DTranspose(filters, 3, padding="same")(x)
-        x = layers.BatchNormalization()(x)
-
-        x = layers.UpSampling2D(2)(x)
-
-        # Project residual
-        residual = layers.UpSampling2D(2)(previous_block_activation)
-        residual = layers.Conv2D(filters, 1, padding="same")(residual)
-        x = layers.add([x, residual])  # Add back residual
-        previous_block_activation = x  # Set aside next residual
-
-    # Add a per-pixel classification layer
-    x = layers.Conv2D(num_classes, 3, activation="softmax", padding="same")(x)
-
-    return x
-
-def get_model(img_shape, num_classes):
-    inputs = keras.Input(shape=img_shape)
-    print('#--- inputs.shape =', inputs.shape)
-    x0 = layers.Permute((2, 3, 1))(inputs)
-    print('#--- x0.shape =', x0.shape)
-    outputs = UNet(x0, num_classes)
-
-    # Define the model
-    model = keras.Model(inputs, outputs)
-    print('#--- outputs.shape =', outputs.shape)
-    return model
-
-# Build model
-model = get_model(IMG_SHAPE, NUM_CLASSES)
+img_chnl = 6
+model = DeeplabV3Plus(img_chnl, image_h=IMAGE_H, image_w=IMAGE_W, num_classes=NUM_CLASSES)
 #model.summary()
 
+'''
 loss = keras.losses.SparseCategoricalCrossentropy(from_logits=True)
 model.compile(
     optimizer=keras.optimizers.Adam(learning_rate=0.001),
@@ -197,7 +201,6 @@ model.compile(
 
 history = model.fit(train_dataset, validation_data=val_dataset, epochs=EPOCHS)
 
-'''
 plt.plot(history.history["loss"])
 plt.title("Training Loss")
 plt.ylabel("loss")
