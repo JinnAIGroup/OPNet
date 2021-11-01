@@ -1,5 +1,13 @@
 """   YPL & JLL, 2021.9.14-15, 10.8
 (YPN) jinn@Liu:~/YPN/OPNet$ python serverB3.py
+
+Input:
+/home/jinn/dataB/UHD--2018-08-02--08-34-47--32/yuv.h5
+/home/jinn/dataB/UHD--2018-08-02--08-34-47--32/pathdata.h5
+/home/jinn/dataB/UHD--2018-08-02--08-34-47--32/radardata.h5
+Output:
+X_batch.shape = (25, 12, 128, 256)
+Y_batch.shape = (25, 2, 56)
 """
 import os
 import zmq
@@ -11,19 +19,12 @@ import argparse
 from datagenB3 import datagen
 from numpy.lib.format import header_data_from_array_1_0
 
-all_dirs = os.listdir('/home/jinn/dataB')
-all_yuvs = ['/home/jinn/dataB/'+i+'/yuv.h5' for i in all_dirs]
-#print('#---  all_yuvs =', all_yuvs)
-
 if six.PY3:
   buffer_ = memoryview
 else:
   buffer_ = buffer  # noqa
 
 logger = logging.getLogger(__name__)
-
-random.seed(0) # makes the random numbers predictable
-random.shuffle(all_yuvs)
 
 def send_arrays(socket, arrays, stop=False):
   if arrays:
@@ -92,12 +93,18 @@ def start_server(data_stream, port=5557, hwm=20):
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser(description='Data Server')
-  parser.add_argument('--batch', dest='batch', type=int, default=25, help='Batch size')
+  parser.add_argument('--batch', dest='batch', type=int, default=10, help='Batch size')
   parser.add_argument('--time', dest='time', type=int, default=10, help='Number of frames per sample')
   parser.add_argument('--port', dest='port', type=int, default=5557, help='Port of the ZMQ server')
   parser.add_argument('--buffer', dest='buffer', type=int, default=20, help='High-water mark. Increasing this increses buffer and memory usage.')
   parser.add_argument('--validation', dest='validation', action='store_true', default=False, help='Serve validation dataset instead.')
   args, more = parser.parse_known_args()
+
+  all_dirs = os.listdir('/home/jinn/dataB')
+  all_yuvs = ['/home/jinn/dataB/'+i+'/yuv.h5' for i in all_dirs]
+  #print('#---  all_yuvs =', all_yuvs)
+  random.seed(0) # makes the random numbers predictable
+  random.shuffle(all_yuvs)
 
   train_len  = int(0.5*len(all_yuvs))
   valid_len  = int(0.5*len(all_yuvs))
