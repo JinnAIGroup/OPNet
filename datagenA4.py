@@ -1,6 +1,5 @@
 """   YPL & JLL, 2021.11.2
 from /home/jinn/YPN/OPNet/datagenB3.py
-
 Input:
 /home/jinn/dataAll/comma10k/Ximgs_yuv/*.h5  (X for debugging)
 /home/jinn/dataAll/comma10k/Xmasks/*.png
