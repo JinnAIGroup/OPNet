@@ -29,6 +29,8 @@ def concatenate(images, masks, mask_H, mask_W, class_values):
 
     for img, msk in zip(images, masks):
         if os.path.isfile(img) and os.path.isfile(msk):
+    rgb = cv2.cvtColor(sYUVs[i], cv2.COLOR_YUV2RGB_I420)
+    cv2.imshow("yuv2rgb (256x512)", rgb)
             imgH5 = h5py.File(img, 'r')
               #---  imgH5['X'].shape = (6, 128, 256)
 
@@ -63,7 +65,6 @@ def datagen(images, masks, batch_size, image_H, image_W, mask_H, mask_W, class_v
     Y_batch = np.zeros((batch_size, mask_H, mask_W, len(class_values)), dtype='float32')
     batchIndx = 0
 
-    #yield(X_batch, Y_batch)
     while True:
         t = time.time()
         count = 0
@@ -96,5 +97,3 @@ def datagen(images, masks, batch_size, image_H, image_W, mask_H, mask_W, class_v
           #---  X_batch.shape = (2, 12, 128, 256)
           #---  Y_batch.shape = (2, 256, 512, 6)
         yield(X_batch, Y_batch)
-'''
-'''
