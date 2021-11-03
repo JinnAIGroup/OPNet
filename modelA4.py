@@ -1,53 +1,18 @@
-'''   JLL, 2021.10.31
+'''   JLL, 2021.11.3 ToDo
 modelA4 = UNet (modelA3x)
-comma10k data:
-   imgs: RGB *.png (874, 1164, 3) = (H, W, C) => hevc2yuvh5A4.py =>
-             CsYUV (6, 128, 256) = (C, H, W) => *_yuv.h5
-  masks: ToDo
+UNet from https://keras.io/examples/vision/oxford_pets_image_segmentation/
+OP PN supercombo from https://drive.google.com/file/d/1L8sWgYKtH77K6Kr3FQMETtAWeQNyyb8R/view
 
-1. Get comma10k data and code: $ git clone https://github.com/commaai/comma10k.git
-2. Make *_yuv.h5 by /home/jinn/openpilot/tools/lib/hevc2yuvh5A4.py
+1. Use supercombo I/O
+2. Task: Multiclass semantic segmentation (NUM_CLASSES = 6)
 3. Input:
-   YUV  = /home/jinn/dataAll/comma10k/imgs_yuv/*.h5
-   Msks = /home/jinn/dataAll/comma10k/masks/*.png
-
-   mask = (874, 1164, 1);  imgs2 = (1208, 1928, 3)
-   Imgs = /home/jinn/dataAll/comma10k/imgs/*.png
-
-   One-to-One RGB-YUV Mapping Theorem: Given YUV bytes = RGB bytes/2, we have
-   sRGB   (256,  512, 3) <=> sYUV   (384,  512) <=>  CsYUV (6, 128,  256) [key:  384 =  256x3/2]
-   bRGB   (874, 1164, 3) <=> bYUV  (1311, 1164) <=>  CbYUV (6, 291,  582) [key: 1311 =  874x3/2]
-   bRGB2 (1208, 1928, 3) <=> bYUV2 (1812, 1928) <=> CbYUV2 (6, 964, 1928) [key: 1812 = 1208x3/2]
-
    2 YUV images with 6 channels = (1, 12, 128, 256)
-   Find: RGB: 874/2 = 437 => ? (one contraction)
-         YUV: 128/2 = 64/2 = 32/2 = 16/2 = 8/2 = 4/2 = 2/2 (7 contractions)
-   Conclusion: must use YUV input
-4. Task: Multiclass semantic segmentation (NUM_CLASSES = 5)
-5. Output:
-   plt.title("Training Loss")
-   plt.title("Training Accuracy")
-   plt.title("Validation Loss")
-   plt.title("Validation Accuracy")
-   plot_predictions(train_images[:4], colormap, model=model)
-     binary mask: one-hot encoded tensor = (?, ?, ?)
-     visualize: RGB segmentation masks (each pixel by a unique color corresponding
-       to each predicted label from the human_colormap.mat file)
-6. Run: (YPN) jinn@Liu:~/YPN/DeepLab$ python modelA4.py
-
-ValueError: Input 0 of layer conv2d is incompatible with the layer: expected axis -1 of
-input shape to have value 12 but received input with shape [1, 256, 3, 128]
-
-Solution?
-ToDo: Use train_modelB3.py I/O method:
+   #--- inputs.shape = (None, 12, 128, 256)
+   #--- x0.shape = (None, 128, 256, 12)  # permutation layer
+4. Output:
+   #--- outputs.shape = (256, 512, 2x6) (num_classes = 6, 2 yuv images)
 Run:
-(YPN) jinn@Liu:~/YPN/OPNet$ python serverB3.py
-(YPN) jinn@Liu:~/YPN/OPNet$ python train_modelB3.py
-Input:
-/home/jinn/dataB/UHD--2018-08-02--08-34-47--32/yuv.h5, pathdata.h5, radardata.h5
-/home/jinn/dataB/UHD--2018-08-02--08-34-47--33/yuv.h5, pathdata.h5, radardata.h5
-Output:
-/OPNet/saved_model/opUNetPNB3_loss.npy
+   (YPN) jinn@Liu:~/YPN/OPNet$ python modelB3.py
 '''
 import os
 import cv2
@@ -60,15 +25,18 @@ from tensorflow import keras
 from tensorflow.keras import layers
 
     #print('#--- image_tensor.shape =', image_tensor.shape)
+DATA_DIR_Imgs = "/home/jinn/dataAll/comma10k/Ximgs_yuv"
+DATA_DIR_Msks = "/home/jinn/dataAll/comma10k/Xmasks"
 IMAGE_H = 128
 IMAGE_W = 256
 IMG_SHAPE = (6, IMAGE_H, IMAGE_W)
-BATCH_SIZE = 1
+MASK_H = 256
+MASK_W = 512
+MASK_SHAPE = (MASK_H, MASK_W, 1)
 NUM_CLASSES = 5
-DATA_DIR_Imgs = "/home/jinn/dataAll/comma10k/imgs_yuv"
-DATA_DIR_Msks = "/home/jinn/dataAll/comma10k/masks"
-NUM_TRAIN_IMAGES = 8  #1000
-NUM_VAL_IMAGES = 4  #50
+BATCH_SIZE = 2
+NUM_TRAIN_IMAGES = 5  #1000
+NUM_VAL_IMAGES = 5  #50
 EPOCHS = 2 #25
 
 train_images = sorted(glob(os.path.join(DATA_DIR_Imgs, "*")))[:NUM_TRAIN_IMAGES]
@@ -80,14 +48,16 @@ val_masks = sorted(glob(os.path.join(DATA_DIR_Msks, "*")))[
     NUM_TRAIN_IMAGES : NUM_VAL_IMAGES + NUM_TRAIN_IMAGES
 ]
 #--- CS1
-print('#--- train_images =', train_images)
+#print('#--- train_masks =', train_masks)
 
 def read_image(image_path, mask=False):
+    #--- image_path = Tensor("args_0:0", shape=(), dtype=string)
     image = tf.io.read_file(image_path)
     if mask:
         image = tf.image.decode_png(image, channels=1)
+        print('#---2 image.shape =', image.shape)
         image.set_shape([None, None, 1])
-        image = tf.image.resize(images=image, size=[IMAGE_H, IMAGE_W])
+        #image = tf.image.resize(images=image, size=[874, 1164])
     else:
         image = tf.image.decode_png(image, channels=3)
         image.set_shape([None, None, 3])
@@ -97,20 +67,25 @@ def read_image(image_path, mask=False):
 
 def load_data(image_list, mask_list):
     image = read_image(image_list)
+      #---4 image.shape = (128, 256, 3)
     mask = read_image(mask_list, mask=True)
+    print('#---5 mask.shape =', mask.shape)
     return image, mask
 
 def data_generator(image_list, mask_list):
     dataset = tf.data.Dataset.from_tensor_slices((image_list, mask_list))
+    print('#---1 dataset =', dataset)
       #---1 dataset = <TensorSliceDataset shapes: ((), ()), types: (tf.string, tf.string)>
       # from_tensor_slices: Iteration happens in a streaming fashion, so the full dataset does not need to fit into memory.
       # from_tensor_slices((images, labels))
     dataset = dataset.map(load_data, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+    print('#---2 dataset =', dataset)
       #---2 dataset = <ParallelMapDataset shapes: ((512, 512, 3), (512, 512, 1)), types: (tf.float32, tf.float32)>
       # num_parallel_calls = the number of batches to compute asynchronously in parallel
       # tf.data.experimental.AUTOTUNE = the number of parallel calls is set dynamically based on available resources.
     dataset = dataset.batch(BATCH_SIZE, drop_remainder=True)
-      #---3 dataset = <BatchDataset shapes: ((4, 512, 512, 3), (4, 512, 512, 1)), types: (tf.float32, tf.float32)>
+    print('#---3 dataset =', dataset)
+      #---3 dataset = <BatchDataset shapes: ((1, 128, 256, 3), (1, 128, 256, 1)), types: (tf.float32, tf.float32)>
     return dataset
 
 train_dataset = data_generator(train_images, train_masks)
@@ -118,6 +93,8 @@ val_dataset = data_generator(val_images, val_masks)
 
 print("Train Dataset:", train_dataset)
 print("Val Dataset:", val_dataset)
+#Train Dataset: <BatchDataset shapes: ((4, 512, 512, 3), (4, 512, 512, 1)), types: (tf.float32, tf.float32)>
+#Val Dataset: <BatchDataset shapes: ((4, 512, 512, 3), (4, 512, 512, 1)), types: (tf.float32, tf.float32)>
 
 def UNet(x0, num_classes):
     ### [First half of the network: contracting resolution] ###
@@ -188,7 +165,7 @@ def get_model(img_shape, num_classes):
 
 # Build model
 model = get_model(IMG_SHAPE, NUM_CLASSES)
-model.summary()
+#model.summary()
 
 loss = keras.losses.SparseCategoricalCrossentropy(from_logits=True)
 model.compile(
@@ -402,12 +379,35 @@ https://github.com/qubvel/segmentation_models.pytorch
   All encoders have pre-trained weights for faster and better convergence
 
 #--- train_images = [
-'/home/jinn/dataAll/comma10k/imgs/0000_0085e9e41513078a_2018-08-19--13-26-08_11_864.png',
-'/home/jinn/dataAll/comma10k/imgs/0001_a23b0de0bc12dcba_2018-06-24--00-29-19_17_79.png',
-'/home/jinn/dataAll/comma10k/imgs/0002_e8e95b54ed6116a6_2018-09-05--22-04-33_2_608.png',
-'/home/jinn/dataAll/comma10k/imgs/0003_97a4ec76e41e8853_2018-09-29--22-46-37_5_585.png',
-'/home/jinn/dataAll/comma10k/imgs/0004_2ac95059f70d76eb_2018-05-12--17-46-52_56_371.png',
-'/home/jinn/dataAll/comma10k/imgs/0005_836d09212ac1b8fa_2018-06-15--15-57-15_23_345.png',
-'/home/jinn/dataAll/comma10k/imgs/0006_0c5c849415c7dba2_2018-08-12--10-26-26_5_1159.png',
-'/home/jinn/dataAll/comma10k/imgs/0007_b5e785c1fc446ed0_2018-06-14--08-27-35_78_873.png']
+'/home/jinn/dataAll/comma10k/imgs_yuv/0000_0085e9e41513078a_2018-08-19--13-26-08_11_864_yuv.h5',
+'/home/jinn/dataAll/comma10k/imgs_yuv/0001_a23b0de0bc12dcba_2018-06-24--00-29-19_17_79_yuv.h5',
+'/home/jinn/dataAll/comma10k/imgs_yuv/0002_e8e95b54ed6116a6_2018-09-05--22-04-33_2_608_yuv.h5',
+'/home/jinn/dataAll/comma10k/imgs_yuv/0003_97a4ec76e41e8853_2018-09-29--22-46-37_5_585_yuv.h5',
+'/home/jinn/dataAll/comma10k/imgs_yuv/0004_2ac95059f70d76eb_2018-05-12--17-46-52_56_371_yuv.h5',
+'/home/jinn/dataAll/comma10k/imgs_yuv/0005_836d09212ac1b8fa_2018-06-15--15-57-15_23_345_yuv.h5',
+'/home/jinn/dataAll/comma10k/imgs_yuv/0006_0c5c849415c7dba2_2018-08-12--10-26-26_5_1159_yuv.h5',
+'/home/jinn/dataAll/comma10k/imgs_yuv/0007_b5e785c1fc446ed0_2018-06-14--08-27-35_78_873_yuv.h5']
+
+#--- train_masks = [
+'/home/jinn/dataAll/comma10k/masks/0000_0085e9e41513078a_2018-08-19--13-26-08_11_864.png',
+'/home/jinn/dataAll/comma10k/masks/0001_a23b0de0bc12dcba_2018-06-24--00-29-19_17_79.png',
+'/home/jinn/dataAll/comma10k/masks/0002_e8e95b54ed6116a6_2018-09-05--22-04-33_2_608.png',
+'/home/jinn/dataAll/comma10k/masks/0003_97a4ec76e41e8853_2018-09-29--22-46-37_5_585.png',
+'/home/jinn/dataAll/comma10k/masks/0004_2ac95059f70d76eb_2018-05-12--17-46-52_56_371.png',
+'/home/jinn/dataAll/comma10k/masks/0005_836d09212ac1b8fa_2018-06-15--15-57-15_23_345.png',
+'/home/jinn/dataAll/comma10k/masks/0006_0c5c849415c7dba2_2018-08-12--10-26-26_5_1159.png',
+'/home/jinn/dataAll/comma10k/masks/0007_b5e785c1fc446ed0_2018-06-14--08-27-35_78_873.png']
+
+#--- val_images = [
+'/home/jinn/dataAll/comma10k/imgs_yuv/0008_b8727c7398d117f5_2018-10-22--15-38-24_71_990_yuv.h5',
+'/home/jinn/dataAll/comma10k/imgs_yuv/0009_ef53f1ffea65e93c_2018-07-26--03-48-48_14_191_yuv.h5',
+'/home/jinn/dataAll/comma10k/imgs_yuv/0010_dad4fa0b6f4978ea_2018-09-07--02-42-25_21_161_yuv.h5',
+'/home/jinn/dataAll/comma10k/imgs_yuv/0011_ce0ea5158a0e1080_2018-09-20--12-28-17_4_1034_yuv.h5']
+
+#--- val_masks = [
+'/home/jinn/dataAll/comma10k/masks/0008_b8727c7398d117f5_2018-10-22--15-38-24_71_990.png',
+'/home/jinn/dataAll/comma10k/masks/0009_ef53f1ffea65e93c_2018-07-26--03-48-48_14_191.png',
+'/home/jinn/dataAll/comma10k/masks/0010_dad4fa0b6f4978ea_2018-09-07--02-42-25_21_161.png',
+'/home/jinn/dataAll/comma10k/masks/0011_ce0ea5158a0e1080_2018-09-20--12-28-17_4_1034.png']
+
 '''
