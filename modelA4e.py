@@ -38,7 +38,9 @@ modelB3 I/O
   File "modelA4.py", line 154, in DeeplabV3Plus
     resnet50 = keras.applications.ResNet50(
  File "/home/jinn/.pyenv/versions/YPN/lib/python3.8/site-packages/tensorflow/python/keras/applications/resnet.py", line 474, in ResNet50
-ValueError: Shapes (7, 7, 6, 64) and (64, 3, 7, 7) are incompatible   # input of resnet50 cannot be yuv imgs => no transfer learning
+ValueError: Shapes (7, 7, 6, 64) and (64, 3, 7, 7) are incompatible   
+
+Conclusion: input of resnet50 cannot be yuv imgs => no transfer learning
 '''
 import os
 import cv2
