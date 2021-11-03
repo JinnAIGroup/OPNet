@@ -28,8 +28,6 @@ def concatenate(images, masks, mask_H, mask_W, class_values):
 
     for img, msk in zip(images, masks):
         if os.path.isfile(img) and os.path.isfile(msk):
-    rgb = cv2.cvtColor(sYUVs[i], cv2.COLOR_YUV2RGB_I420)
-    cv2.imshow("yuv2rgb (256x512)", rgb)
             imgH5 = h5py.File(img, 'r')
               #---  imgH5['X'].shape = (6, 128, 256)
 
