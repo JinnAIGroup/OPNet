@@ -1,11 +1,13 @@
-"""   YPL & JLL, 2021.11.2
+"""   YPL & JLL, 2021.11.2, 11.4
 from /home/jinn/YPN/OPNet/datagenB3.py
 Input:
-/home/jinn/dataAll/comma10k/Ximgs_yuv/*.h5  (X for debugging)
-/home/jinn/dataAll/comma10k/Xmasks/*.png
+  bRGB (874, 1164, 3) = (H, W, C) <=> bYUV (1311, 1164) <=>  CbYUV (6, 291,  582) = (C, H, W) [key: 1311 =  874x3/2]
+  sRGB (256,  512, 3) = (H, W, C) <=> sYUV  (384,  512) <=>  CsYUV (6, 128,  256) = (C, H, W) [key:  384 =  256x3/2]
+  /home/jinn/dataAll/comma10k/Ximgs_yuv/*.h5  (X for debugging)
+  /home/jinn/dataAll/comma10k/Xmasks/*.png
 Output:
-X_batch.shape = (2, 12, 128, 256)
-Y_batch.shape = (2, 256, 512, 6)
+  X_batch.shape = (2, 12, 128, 256)
+  Y_batch.shape = (2, 256, 512, 6)
 """
 import os
 import cv2
@@ -59,29 +61,29 @@ def concatenate(images, masks, mask_H, mask_W, class_values):
 def datagen(images, masks, batch_size, image_H, image_W, mask_H, mask_W, class_values):
     all_images, all_masks = concatenate(images, masks, mask_H, mask_W, class_values)
     X_batch = np.zeros((batch_size, 12, image_H, image_W), dtype='uint8')
-    Y_batch = np.zeros((batch_size, mask_H, mask_W, len(class_values)), dtype='float32')
+    Y_batch = np.zeros((batch_size, mask_H, mask_W, 2*len(class_values)), dtype='float32')
+    imgsN = len(all_images)
     batchIndx = 0
+    np.random.seed(0)
 
     while True:
         t = time.time()
         count = 0
-
         while count < batch_size:
-            for i in range(len(all_images)):
-                #---  Xcf5.shape = (6, 128, 256)
-              vsX1 = all_images[count]
-              if (count+1) == batch_size:   # every img used twice except the first
-                  vsX2 = all_images[count]
-              else:
-                  vsX2 = all_images[count+1]
-                #print('#---  vsX2.shape =', vsX2.shape)
-                #---  vsX2.shape = (6, 128, 256)
-              X_batch[count] = np.vstack((vsX1, vsX2))
+            ri = np.random.randint(0, imgsN-1, 1)[-1]
+            for i in range(imgsN-1):
+                if ri < imgsN-1:   # the last imge is used only once
+                    vsX1 = all_images[ri]
+                    vsX2 = all_images[ri+1]
+                    X_batch[count] = np.vstack((vsX1, vsX2))
 
-              #Y_batch[count] = np.vstack((vsPnL1, vsPnL2))
-              break
+                    vsY1 = all_masks[ri]
+                    vsY2 = all_masks[ri+1]
+                    Y_batch[count] = np.concatenate((vsY1, vsY1), axis=-1)
+                break
 
             print('#---  count =', count)
+            print('#---  not repeated? predictable? ri =', ri)
             count += 1
 
         batchIndx += 1
@@ -89,6 +91,8 @@ def datagen(images, masks, batch_size, image_H, image_W, mask_H, mask_W, class_v
         t2 = time.time()
         print('#---  datagen time =', "%5.2f ms" % ((t2-t)*1000.0))
 
+        print('#---datagenA4  vsX2.shape =', vsX2.shape)
+        print('#---datagenA4  vsY2.shape =', vsY2.shape)
         print('#---datagenA4  X_batch.shape =', X_batch.shape)
         print('#---datagenA4  Y_batch.shape =', Y_batch.shape)
           #---  X_batch.shape = (2, 12, 128, 256)

@@ -1,11 +1,14 @@
-"""   YPL & JLL, 2021.11.2
+"""   YPL & JLL, 2021.11.2, 11.4
 (YPN) jinn@Liu:~/YPN/DeepLab$ python serverA4.py
+
 Input:
-/home/jinn/dataAll/comma10k/Ximgs_yuv/*.h5  (X for debugging)
-/home/jinn/dataAll/comma10k/Xmasks/*.png
+  bRGB (874, 1164, 3) = (H, W, C) <=> bYUV (1311, 1164) <=>  CbYUV (6, 291,  582) = (C, H, W) [key: 1311 =  874x3/2]
+  sRGB (256,  512, 3) = (H, W, C) <=> sYUV  (384,  512) <=>  CsYUV (6, 128,  256) = (C, H, W) [key:  384 =  256x3/2]
+  /home/jinn/dataAll/comma10k/Ximgs_yuv/*.h5  (X for debugging)
+  /home/jinn/dataAll/comma10k/Xmasks/*.png
 Output:
-X_batch.shape = (2, 2x6, 128, 256) (num_channels = 6, 2 yuv images)
-Y_batch.shape = (2, 256, 512, 2x6) (num_classes  = 6)
+  X_batch.shape = (2, 2x6, 128, 256) (num_channels = 6, 2 yuv images)
+  Y_batch.shape = (2, 256, 512, 2x6) (num_classes  = 6)
 """
 import os
 import zmq
@@ -119,18 +122,6 @@ if __name__ == "__main__":
       #print('#---1  all_images =', all_images)
       #print('#---2  all_masks =', all_masks)
 
-    random.seed(0) # makes the random numbers predictable
-      #random.shuffle(all_images)  # shuffle all (10 in Ximgs_yuv or 9888 in imgs_yuv) imgs
-
-      # shuffle two arrays the same way
-    joined_lists = list(zip(all_images, all_masks))
-    random.shuffle(joined_lists)  # Shuffle "joined_lists" in place
-    all_images, all_masks = zip(*joined_lists)  # Undo joining
-    all_images = list(all_images)  # tuple to array (list)
-    all_masks = list(all_masks)
-      #print('#---3  all_images =', all_images)
-      #print('#---4  all_masks =', all_masks)
-
     train_len  = int(0.5*len(all_images))
     valid_len  = int(0.5*len(all_images))
     train_images = all_images[: train_len]
@@ -167,18 +158,4 @@ if __name__ == "__main__":
 '/home/jinn/dataAll/comma10k/Xmasks/0002_e8e95b54ed6116a6_2018-09-05--22-04-33_2_608.png',
 '/home/jinn/dataAll/comma10k/Xmasks/0003_97a4ec76e41e8853_2018-09-29--22-46-37_5_585.png',
 '/home/jinn/dataAll/comma10k/Xmasks/0004_2ac95059f70d76eb_2018-05-12--17-46-52_56_371.png', ...]
-
-#---3  all_images = [
-'/home/jinn/dataAll/comma10k/Ximgs_yuv/0007_b5e785c1fc446ed0_2018-06-14--08-27-35_78_873_yuv.h5',
-'/home/jinn/dataAll/comma10k/Ximgs_yuv/0008_b8727c7398d117f5_2018-10-22--15-38-24_71_990_yuv.h5',
-'/home/jinn/dataAll/comma10k/Ximgs_yuv/0001_a23b0de0bc12dcba_2018-06-24--00-29-19_17_79_yuv.h5',
-'/home/jinn/dataAll/comma10k/Ximgs_yuv/0005_836d09212ac1b8fa_2018-06-15--15-57-15_23_345_yuv.h5',
-'/home/jinn/dataAll/comma10k/Ximgs_yuv/0003_97a4ec76e41e8853_2018-09-29--22-46-37_5_585_yuv.h5', ...]
-
-#---4  all_masks = [
-'/home/jinn/dataAll/comma10k/Xmasks/0007_b5e785c1fc446ed0_2018-06-14--08-27-35_78_873.png',
-'/home/jinn/dataAll/comma10k/Xmasks/0008_b8727c7398d117f5_2018-10-22--15-38-24_71_990.png',
-'/home/jinn/dataAll/comma10k/Xmasks/0001_a23b0de0bc12dcba_2018-06-24--00-29-19_17_79.png',
-'/home/jinn/dataAll/comma10k/Xmasks/0005_836d09212ac1b8fa_2018-06-15--15-57-15_23_345.png',
-'/home/jinn/dataAll/comma10k/Xmasks/0003_97a4ec76e41e8853_2018-09-29--22-46-37_5_585.png', ...]
 '''

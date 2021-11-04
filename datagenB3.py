@@ -2,12 +2,14 @@
 Make yuv.h5 by /home/jinn/openpilot/tools/lib/hevc2yuvh5B3.py
 
 Input:
-/home/jinn/dataB/UHD--2018-08-02--08-34-47--32/yuv.h5
-/home/jinn/dataB/UHD--2018-08-02--08-34-47--32/pathdata.h5
-/home/jinn/dataB/UHD--2018-08-02--08-34-47--32/radardata.h5
+  bRGB (874, 1164, 3) = (H, W, C) <=> bYUV (1311, 1164) <=>  CbYUV (6, 291,  582) = (C, H, W) [key: 1311 =  874x3/2]
+  sRGB (256,  512, 3) = (H, W, C) <=> sYUV  (384,  512) <=>  CsYUV (6, 128,  256) = (C, H, W) [key:  384 =  256x3/2]
+  /home/jinn/dataB/UHD--2018-08-02--08-34-47--32/yuv.h5
+  /home/jinn/dataB/UHD--2018-08-02--08-34-47--32/pathdata.h5
+  /home/jinn/dataB/UHD--2018-08-02--08-34-47--32/radardata.h5
 Output:
-X_batch.shape = (25, 12, 128, 256)
-Y_batch.shape = (25, 2, 56)
+  X_batch.shape = (25, 12, 128, 256)
+  Y_batch.shape = (25, 2, 56)
 """
 import os
 import time
@@ -84,6 +86,7 @@ def datagen(camera_files, max_time_len, batch_size=10):  # I did not use max_tim
 
     while count < batch_size:
       ri = np.random.randint(0, lastidx-1, 1)[-1]  # lastidx-1 = 1149
+
       for fl, el, Xcf5 in all_frames:
         #---  Xcf5.shape = (1150, 6, 128, 256)
 
@@ -106,6 +109,7 @@ def datagen(camera_files, max_time_len, batch_size=10):  # I did not use max_tim
           break
 
       print('#---  count =', count)
+      print('#---  not repeated? ri =', ri)
       count += 1
 
     if Nplot == 0:
