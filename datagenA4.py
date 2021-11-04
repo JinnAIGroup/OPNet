@@ -76,10 +76,12 @@ def datagen(images, masks, batch_size, image_H, image_W, mask_H, mask_W, class_v
                 if ri < imgsN-1:   # the last imge is used only once
                     vsX1 = all_images[ri]
                     vsX2 = all_images[ri+1]
+                      #---  vsX2.shape = (6, 128, 256)
                     X_batch[count] = np.vstack((vsX1, vsX2))
 
                     vsY1 = all_masks[ri]
                     vsY2 = all_masks[ri+1]
+                      #---  vsY2.shape = (256, 512, 6)
                     Y_batch[count] = np.concatenate((vsY1, vsY1), axis=-1)
                 break
 
@@ -92,10 +94,8 @@ def datagen(images, masks, batch_size, image_H, image_W, mask_H, mask_W, class_v
         t2 = time.time()
         print('#---  datagen time =', "%5.2f ms" % ((t2-t)*1000.0))
 
-        print('#---datagenA4  vsX2.shape =', vsX2.shape)
-        print('#---datagenA4  vsY2.shape =', vsY2.shape)
         print('#---datagenA4  X_batch.shape =', X_batch.shape)
         print('#---datagenA4  Y_batch.shape =', Y_batch.shape)
           #---  X_batch.shape = (2, 12, 128, 256)
-          #---  Y_batch.shape = (2, 256, 512, 6)
+          #---  Y_batch.shape = (2, 256, 512, 12)
         yield(X_batch, Y_batch)

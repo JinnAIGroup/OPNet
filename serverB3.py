@@ -2,12 +2,14 @@
 (YPN) jinn@Liu:~/YPN/OPNet$ python serverB3.py
 
 Input:
-/home/jinn/dataB/UHD--2018-08-02--08-34-47--32/yuv.h5
-/home/jinn/dataB/UHD--2018-08-02--08-34-47--32/pathdata.h5
-/home/jinn/dataB/UHD--2018-08-02--08-34-47--32/radardata.h5
+  bRGB (874, 1164, 3) = (H, W, C) <=> bYUV (1311, 1164) <=>  CbYUV (6, 291,  582) = (C, H, W) [key: 1311 =  874x3/2]
+  sRGB (256,  512, 3) = (H, W, C) <=> sYUV  (384,  512) <=>  CsYUV (6, 128,  256) = (C, H, W) [key:  384 =  256x3/2]
+  /home/jinn/dataB/UHD--2018-08-02--08-34-47--32/yuv.h5
+  /home/jinn/dataB/UHD--2018-08-02--08-34-47--32/pathdata.h5
+  /home/jinn/dataB/UHD--2018-08-02--08-34-47--32/radardata.h5
 Output:
-X_batch.shape = (25, 12, 128, 256)
-Y_batch.shape = (25, 2, 56)
+  X_batch.shape = (25, 12, 128, 256)
+  Y_batch.shape = (25, 2, 56)
 """
 import os
 import zmq
@@ -28,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 def send_arrays(socket, arrays, stop=False):
   if arrays:
-    # The buffer protocol only works on contiguous arrays
+      # The buffer protocol only works on contiguous arrays
     arrays = [numpy.ascontiguousarray(array) for array in arrays]
   if stop:
     headers = {'stop': True}
@@ -75,7 +77,7 @@ def start_server(data_stream, port=5557, hwm=20):
   socket.set_hwm(hwm)
   socket.bind('tcp://*:{}'.format(port))
 
-  # it = itertools.tee(data_stream)
+    # it = itertools.tee(data_stream)
   it = data_stream
   logger.info('server started')
   while True:
@@ -102,7 +104,7 @@ if __name__ == "__main__":
 
   all_dirs = os.listdir('/home/jinn/dataB')
   all_yuvs = ['/home/jinn/dataB/'+i+'/yuv.h5' for i in all_dirs]
-  #print('#---  all_yuvs =', all_yuvs)
+    #print('#---  all_yuvs =', all_yuvs)
   random.seed(0) # makes the random numbers predictable
   random.shuffle(all_yuvs)
 
