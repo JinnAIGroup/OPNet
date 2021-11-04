@@ -2,13 +2,13 @@
 from /home/jinn/YPN/OPNet/datagenB3.py
 
 Input:
-  bRGB (874, 1164, 3) = (H, W, C) <=> bYUV (1311, 1164) <=>  CbYUV (6, 291,  582) = (C, H, W) [key: 1311 =  874x3/2]
-  sRGB (256,  512, 3) = (H, W, C) <=> sYUV  (384,  512) <=>  CsYUV (6, 128,  256) = (C, H, W) [key:  384 =  256x3/2]
+  bRGB (874, 1164, 3) = (H, W, C) <=> bYUV (1311, 1164) <=> CbYUV (6, 291,  582) = (C, H, W) [key: 1311 =  874x3/2]
+  sRGB (256,  512, 3) = (H, W, C) <=> sYUV  (384,  512) <=> CsYUV (6, 128,  256) = (C, H, W) [key:  384 =  256x3/2]
   /home/jinn/dataAll/comma10k/Ximgs_yuv/*.h5  (X for debugging)
   /home/jinn/dataAll/comma10k/Xmasks/*.png
 Output:
   X_batch.shape = (2, 12, 128, 256)
-  Y_batch.shape = (2, 256, 512, 6)
+  Y_batch.shape = (2, 256, 512, 12)
 """
 import os
 import cv2
