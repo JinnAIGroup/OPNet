@@ -5,10 +5,10 @@ Train Keras Functional modelB3 = UNet + Pose Net (PN) = opUNetPNB3
 1. Use OP supercombo I/O
 2. Task: Regression for Path Prediction
 3. Pose: Ego path (x, y); lead car's dRel (relative distance), yRel, vRel (velocity), aRel (acceleration), prob
-4. Ground Truth: Y_batch = (25, 112)
+4. Ground Truth: Y_batch = (none, 112)
 5. Loss: mean squared error (mse)
 6. Input:
-   X_batch from yuv.h: 2 YUV images with 6 channels = (1, 12, 128, 256)
+   X_batch from yuv.h: 2 YUV images with 6 channels = (none, 12, 128, 256)
    Y_batch from pathdata.h5, radardata.h5
 7. Output: mse loss
 8. Make yuv.h5 by /home/jinn/openpilot/tools/lib/hevc2yuvh5B3.py
@@ -38,21 +38,18 @@ os.environ['CUDA_VISIBLE_DEVICES'] = "-1"
 def gen(hwm, host, port):
   for tup in client_generator(hwm=hwm, host=host, port=port):
     X, Y = tup
+    #--- Y.shape = (25, 2, 56)
     X_batch = X
     Y_batch = Y.reshape(Y.shape[0], -1)
     print('#--- X_batch.shape =', X_batch.shape)
     print('#--- Y_batch.shape =', Y_batch.shape)
     #print('#--- Y.shape[0] =', Y.shape[0])
-    #--- X_batch.shape = (25, 12, 128, 256)
-    #--- Y.shape = (25, 2, 56)
-    #--- Y_batch.shape = (25, 112)
 
+    #--- X_batch.shape = (25, 12, 128, 256)
+    #--- Y_batch.shape = (25, 112)
     yield X_batch, Y_batch
 
 if __name__=="__main__":
-  # Free up RAM in case the model definition cells were run multiple times
-  tf.keras.backend.clear_session()
-
   start_time = time.time()
   parser = argparse.ArgumentParser(description='Training modelB3')
   parser.add_argument('--host', type=str, default="localhost", help='Data server ip address.')
@@ -92,7 +89,7 @@ if __name__=="__main__":
   np.save('./saved_model/opUNetPNB3_loss', np.array(history.history['loss']))
   lossnpy = np.load('./saved_model/opUNetPNB3_loss.npy')
   plt.plot(lossnpy)
-  plt.draw() #plt.show() # How to stop server
+  plt.draw() #plt.show()
   print('#--- modelB3 lossnpy.shape =', lossnpy.shape)
   plt.pause(0.5)
   input("Press ENTER to exit ...")

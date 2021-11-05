@@ -1,11 +1,11 @@
 '''   JLL, 2021.10.20
-Build modelB3 = UNet + Pose Net (PN) = opUNetPNB3
+Build modelB3 = UNet + Pose Net (PN)
 UNet from https://keras.io/examples/vision/oxford_pets_image_segmentation/
 OP PN supercombo from https://drive.google.com/file/d/1L8sWgYKtH77K6Kr3FQMETtAWeQNyyb8R/view
 
 1. Use supercombo I/O
 2. Task: Regression for Path Prediction
-3. Input: 2 YUV images with 6 channels = (1, 12, 128, 256)
+3. Input: 2 YUV images with 6 channels = (none, 12, 128, 256)
    #--- inputs.shape = (None, 12, 128, 256)
    #--- x0.shape = (None, 128, 256, 12)  # permutation layer
 4. Output:

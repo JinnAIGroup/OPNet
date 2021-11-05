@@ -7,15 +7,14 @@ Input:
   /home/jinn/dataAll/comma10k/Ximgs_yuv/*.h5  (X for debugging)
   /home/jinn/dataAll/comma10k/Xmasks/*.png
 Output:
-  X_batch.shape = (2, 12, 128, 256)
-  Y_batch.shape = (2, 256, 512, 12)
+  X_batch.shape = (none, 12, 128, 256)
+  Y_batch.shape = (none, 256, 512, 12)
 """
 import os
 import cv2
 import h5py
 import time
 import numpy as np
-import tensorflow as tf
 import matplotlib.pyplot as plt
 
 def visualize(image):

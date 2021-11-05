@@ -7,8 +7,8 @@ Input:
   /home/jinn/dataAll/comma10k/Ximgs_yuv/*.h5  (X for debugging)
   /home/jinn/dataAll/comma10k/Xmasks/*.png
 Output:
-  X_batch.shape = (2, 2x6, 128, 256) (num_channels = 6, 2 yuv images)
-  Y_batch.shape = (2, 256, 512, 2x6) (num_classes  = 6)
+  X_batch.shape = (none, 2x6, 128, 256) (num_channels = 6, 2 yuv images)
+  Y_batch.shape = (none, 256, 512, 2x6) (num_classes = 6)
 """
 import os
 import zmq

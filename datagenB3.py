@@ -8,8 +8,8 @@ Input:
   /home/jinn/dataB/UHD--2018-08-02--08-34-47--32/pathdata.h5
   /home/jinn/dataB/UHD--2018-08-02--08-34-47--32/radardata.h5
 Output:
-  X_batch.shape = (25, 12, 128, 256)
-  Y_batch.shape = (25, 2, 56)
+  X_batch.shape = (none, 12, 128, 256)
+  Y_batch.shape = (none, 2, 56)
 """
 import os
 import time
