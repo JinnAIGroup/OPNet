@@ -1,13 +1,17 @@
-'''  JLL, 2021.9.24, 10.2
+'''  JLL, 2021.9.24, 10.2, 11.5
 From /home/jinn/YPN/Leon/main.py
-(YPN) jinn@Liu:~/YPN/Leon$ python video_to_yuvB3.py ./fcamera.hevc
+
+(YPN) jinn@Liu:~/openpilot/tools/lib$ python video_to_yuvB3.py ./fcamera.hevc
+Input: fcamera.hevc
+Output: Vedio demo. No output files.
 '''
 import sys
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
-from common.transformations.camera import transform_img, eon_intrinsics
+from cameraB3 import transform_img, eon_intrinsics
+# cameraB3 = /home/jinn/YPN/Leon/common/transformations/camera.py
 from common.transformations.model import medmodel_intrinsics
 '''
 big   RGB (874, 1164, 3) = (H, W, C) => Bytes: 874x1164x3
