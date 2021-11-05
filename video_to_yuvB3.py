@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 from cameraB3 import transform_img, eon_intrinsics
 # cameraB3 = /home/jinn/YPN/Leon/common/transformations/camera.py
+#          = https://github.com/JinnAIGroup/OPNet/blob/main/cameraB3.py
 from common.transformations.model import medmodel_intrinsics
 '''
 big   RGB (874, 1164, 3) = (H, W, C) => Bytes: 874x1164x3
