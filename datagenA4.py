@@ -1,4 +1,4 @@
-"""   YPL & JLL, 2021.11.2, 11.4
+"""   YPL & JLL, 2021.11.2, 11.5
 from /home/jinn/YPN/OPNet/datagenB3.py
 
 Input:
@@ -56,11 +56,13 @@ def concatenate(images, masks, mask_H, mask_W, class_values):
     print('#---datagenA4  np.shape(all_masks) =', np.shape(all_masks))
       #---  np.shape(all_images) = (5, 6, 128, 256)
       #---  np.shape(all_masks)  = (5, 256, 512, 6)
+    print('#---datagenA4  np.array(all_images)[0, :, 64, 128] =', np.array(all_images)[0, :, 64, 128])
     return all_images, all_masks
 
 def datagen(images, masks, batch_size, image_H, image_W, mask_H, mask_W, class_values):
     all_images, all_masks = concatenate(images, masks, mask_H, mask_W, class_values)
-    X_batch = np.zeros((batch_size, 12, image_H, image_W), dtype='uint8')
+    #X_batch = np.zeros((batch_size, 12, image_H, image_W), dtype='uint8')   # for RGB imgs
+    X_batch = np.zeros((batch_size, 12, image_H, image_W), dtype='float32')   # for YUV imgs
     Y_batch = np.zeros((batch_size, mask_H, mask_W, 2*len(class_values)), dtype='float32')
     imgsN = len(all_images)
     batchIndx = 0
@@ -97,4 +99,6 @@ def datagen(images, masks, batch_size, image_H, image_W, mask_H, mask_W, class_v
         print('#---datagenA4  Y_batch.shape =', Y_batch.shape)
           #---  X_batch.shape = (2, 12, 128, 256)
           #---  Y_batch.shape = (2, 256, 512, 12)
+        print('#---datagenA4  np.array(vsX1)[:,  64, 128] =', np.array(vsX1)[:, 64, 128])
+        print('#---datagenA4  X_batch[0,   :,  64, 128] =', X_batch[0, :, 64, 128])
         yield(X_batch, Y_batch)

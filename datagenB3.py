@@ -1,4 +1,4 @@
-"""   YPL & JLL, 2021.9.15, 10.9
+"""   YPL & JLL, 2021.9.15, 10.9, 11.5
 Make yuv.h5 by /home/jinn/openpilot/tools/lib/hevc2yuvh5B3.py
 
 Input:
@@ -76,7 +76,8 @@ def concatenate(camera_files):
 
 def datagen(camera_files, max_time_len, batch_size=10):  # I did not use max_time_len
   all_frames, lastidx, PnL = concatenate(camera_files)
-  X_batch = np.zeros((batch_size, 12, 128, 256), dtype='uint8')
+  #X_batch = np.zeros((batch_size, 12, 128, 256), dtype='uint8')   # for RGB imgs
+  X_batch = np.zeros((batch_size, 12, 128, 256), dtype='float32')   # for YUV imgs
   Y_batch = np.zeros((batch_size, 2, 51+5), dtype='float32')
 
   Nplot = 0
