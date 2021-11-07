@@ -22,14 +22,11 @@ from numpy.lib.format import header_data_from_array_1_0
 
 DATA_DIR_Imgs = '/home/jinn/dataAll/comma10k/Ximgs_yuv/'  # Ximgs with 10 images only for debugging
 DATA_DIR_Msks = '/home/jinn/dataAll/comma10k/Xmasks/'
+BATCH_SIZE = 2
 IMAGE_H = 128
 IMAGE_W = 256
 MASK_H = 256
 MASK_W = 512
-BATCH_SIZE = 2
-NUM_TRAIN_IMAGES = 5  #1000
-NUM_VAL_IMAGES = 5  #50
-EPOCHS = 2 #25
 
 class_values = [41,  76,  90, 124, 161, 0] # 0 added for padding
 # https://github.com/YassineYousfi/comma10k-baseline/blob/ca1c0d1f47e5c4cb14f7ab29130d8f20dec5fc87/LitModel.py
@@ -122,8 +119,8 @@ if __name__ == "__main__":
       #print('#---1  all_images =', all_images)
       #print('#---2  all_masks =', all_masks)
 
-    train_len  = int(0.5*len(all_images))
-    valid_len  = int(0.5*len(all_images))
+    train_len  = int(0.6*len(all_images))
+    valid_len  = int(0.4*len(all_images))
     train_images = all_images[: train_len]
     valid_images = all_images[train_len: train_len + valid_len]
     train_masks = all_masks[: train_len]
