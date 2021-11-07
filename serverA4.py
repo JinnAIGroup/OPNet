@@ -20,6 +20,7 @@ import argparse
 from datagenA4 import datagen
 from numpy.lib.format import header_data_from_array_1_0
 
+# Set these three global values the same as those in train_modelA4.py
 DATA_DIR_Imgs = '/home/jinn/dataAll/comma10k/Ximgs_yuv/'  # Ximgs with 10 images only for debugging
 DATA_DIR_Msks = '/home/jinn/dataAll/comma10k/Xmasks/'
 BATCH_SIZE = 2

@@ -36,7 +36,7 @@ from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping
 from modelA4 import get_model
 from serverA4 import client_generator
 
-# Set these three global values the same as those in serverA4
+# Set these three global values the same as those in serverA4.py
 DATA_DIR_Imgs = '/home/jinn/dataAll/comma10k/Ximgs_yuv/'  # Ximgs with 10 images only for debugging
 DATA_DIR_Msks = '/home/jinn/dataAll/comma10k/Xmasks/'
 BATCH_SIZE = 2
