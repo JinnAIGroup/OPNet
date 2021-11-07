@@ -39,7 +39,7 @@ from serverA4 import client_generator
 DATA_DIR_Imgs = '/home/jinn/dataAll/comma10k/Ximgs_yuv/'  # Ximgs with 10 images only for debugging
 DATA_DIR_Msks = '/home/jinn/dataAll/comma10k/Xmasks/'
 EPOCHS = 5
-BATCH_SIZE = 2
+BATCH_SIZE = 2   # Set this value the same in serverA4
 
 os.environ['CUDA_VISIBLE_DEVICES'] = "-1"
 
