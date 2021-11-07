@@ -23,6 +23,7 @@ from numpy.lib.format import header_data_from_array_1_0
 DATA_DIR_Imgs = '/home/jinn/dataAll/comma10k/Ximgs_yuv/'  # Ximgs with 10 images only for debugging
 DATA_DIR_Msks = '/home/jinn/dataAll/comma10k/Xmasks/'
 BATCH_SIZE = 2
+
 IMAGE_H = 128
 IMAGE_W = 256
 MASK_H = 256
