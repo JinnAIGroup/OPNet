@@ -1,4 +1,4 @@
-"""   JLL, 2021.11.5
+"""   JLL, 2021.11.5, 11.7
 from /home/jinn/YPN/OPNet/train_modelB3.py
 train modelA4 = UNet on comma10k data
 
@@ -36,19 +36,51 @@ from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping
 from modelA4 import get_model
 from serverA4 import client_generator
 
+DATA_DIR_Imgs = '/home/jinn/dataAll/comma10k/Ximgs_yuv/'  # Ximgs with 10 images only for debugging
+DATA_DIR_Msks = '/home/jinn/dataAll/comma10k/Xmasks/'
+EPOCHS = 10
+BATCH_SIZE = 2
+
 os.environ['CUDA_VISIBLE_DEVICES'] = "-1"
 
-def gen(hwm, host, port):
+def gen(hwm, host, port, model):
     for tup in client_generator(hwm=hwm, host=host, port=port):
         X_batch, Y_batch = tup
-        print('#--- X_batch.shape =', X_batch.shape)
-        print('#--- Y_batch.shape =', Y_batch.shape)
-        print('#--- X_batch[0,   :,  64, 128] =', X_batch[0, :, 64,  128])
-        print('#--- Y_batch[0, 128, 256,   :] =', Y_batch[0, 128, 256, :])
+        print('#---  X_batch[0,   :,  64, 128] =', X_batch[0, :, 64,  128])
+        print('#---  Y_batch[0, 128, 256,   :] =', Y_batch[0, 128, 256, :])
+
+        Y_pred = model.predict(x=X_batch)
+        loss = custom_loss(Y_batch, Y_pred)
 
           #--- X_batch.shape = (2, 12, 128, 256)
           #--- Y_batch.shape = (2, 256, 512, 12)
         yield X_batch, Y_batch
+
+def custom_loss(y_true, y_pred):
+      #---  y_true.shape = (None, None, None, None)???
+      #---  y_pred.shape = (None???, 256, 512, 12)
+      #---  y_true.shape = (2, 256, 512, 12)
+      #---  y_pred.shape = (2, 256, 512, 12)
+    print('#---  y_true[0, 128, 256, :] =', y_true[0, 128, 256, :])
+    print('#---  y_pred[0, 128, 256, :] =', y_pred[0, 128, 256, :])
+      #---  y_true[0,  64, 128, :] = Tensor("custom_loss/strided_slice:0", shape=(None,), dtype=float32)???
+      #---  y_true[0,  64, 128, :] = Tensor("custom_loss/strided_slice_1:0", shape=(None,), dtype=float32)???
+      # ??? problems are solved by loss = custom_loss(Y_batch, p)
+
+    cce = tf.keras.losses.CategoricalCrossentropy(from_logits=True)
+    loss12 = cce(y_true, y_pred)   # y_true.shape = (2, 256, 512, 12)
+      # NumPy Array Slicing: https://www.w3schools.com/python/numpy/trypython.asp?filename=demo_numpy_array_slicing_2d
+    loss1 = cce(y_true[:, :, :,  0:6], y_pred[:, :, :,  0:6])
+    loss2 = cce(y_true[:, :, :, 6:12], y_pred[:, :, :, 6:12])
+    loss = (loss1 + loss2)/2
+    print('#---  loss12 =', loss12)
+    print('#---  loss1 =', loss1)
+    print('#---  loss2 =', loss2)
+    print('#---  loss =', loss)
+      #---  loss = Tensor("custom_loss/categorical_crossentropy/weighted_loss/value:0", shape=(), dtype=float32)
+      #---  loss = tf.Tensor(4.938825, shape=(), dtype=float32)
+
+    return loss
 
 if __name__=="__main__":
     start_time = time.time()
@@ -56,13 +88,13 @@ if __name__=="__main__":
     parser.add_argument('--host', type=str, default="localhost", help='Data server ip address.')
     parser.add_argument('--port', type=int, default=5557, help='Port of server.')
     parser.add_argument('--val_port', type=int, default=5556, help='Port of server for validation dataset.')
-    #parser.add_argument('--epoch', type=int, default=30, help='Number of epochs.')
-    parser.add_argument('--epoch', type=int, default=1, help='Number of epochs.')
-    #parser.add_argument('--epochsize', type=int, default=10000, help='How many frames per epoch.')
-    parser.add_argument('--epochsize', type=int, default=1, help='How many frames per epoch.')
-    parser.add_argument('--skipvalidate', dest='skipvalidate', action='store_true', help='Multiple path output.')
-
     args = parser.parse_args()
+
+    all_img_dirs = os.listdir(DATA_DIR_Imgs)
+    all_msk_dirs = os.listdir(DATA_DIR_Msks)
+    all_images = [DATA_DIR_Imgs+i for i in all_img_dirs]
+    train_len  = int(0.8*len(all_images))
+    valid_len  = int(0.2*len(all_images))
 
     # Build model
     img_shape = (12, 128, 256)
@@ -75,27 +107,31 @@ if __name__=="__main__":
                                  save_best_only=True, mode='min')
     callbacks_list = [checkpoint]
 
-    loss = tf.keras.losses.CategoricalCrossentropy(from_logits=True)
+    #loss = tf.keras.losses.CategoricalCrossentropy(from_logits=True)
     adam = tf.keras.optimizers.Adam(lr=0.0001)
 
     #model.load_weights('./saved_model/modelA4-BestWeights.hdf5', by_name=True)
-    model.compile(optimizer=adam, loss=loss, metrics=["accuracy"])
+    model.compile(optimizer=adam, loss=custom_loss, metrics=["accuracy"])
 
-    #gen(20, args.host, port=args.port)   # test
-
+      # https://www.pyimagesearch.com/2018/12/24/how-to-use-keras-fit-and-fit_generator-a-hands-on-tutorial/
     history = model.fit(
-      gen(20, args.host, port=args.port),
-      steps_per_epoch=1, epochs=5,
-      validation_steps=20*1200/25., verbose=1, callbacks=callbacks_list)
+      gen(20, args.host, port=args.port, model=model),
+      steps_per_epoch=train_len//BATCH_SIZE, epochs=EPOCHS,
+      validation_steps=valid_len//BATCH_SIZE, verbose=1, callbacks=callbacks_list)
+        # steps_per_epoch = Total Training Samples / Training Batch Size
+        # validation_steps = total_validation_samples / validation_batch_size
 
-    print('#--- # of epochs are run =', len(history.history['loss']))
+    #print('#---  # of epochs are run =', len(history.history['loss']))
     model.save('./saved_model/modelA4.h5')
 
     np.save('./saved_model/modelA4_loss', np.array(history.history['loss']))
     lossnpy = np.load('./saved_model/modelA4_loss.npy')
     plt.plot(lossnpy)
+    plt.title("Training Loss")
+    plt.xlabel("epoch")
+    plt.ylabel("loss")
     plt.draw() #plt.show()
-    print('#--- modelA4 lossnpy.shape =', lossnpy.shape)
+    #print('#---  modelA4 lossnpy.shape =', lossnpy.shape)
     plt.pause(0.5)
     input("Press ENTER to exit ...")
     plt.close()
