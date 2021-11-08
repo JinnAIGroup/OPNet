@@ -1,10 +1,12 @@
-"""   YPL & JLL, 2021.11.2, 11.4
-(YPN) jinn@Liu:~/YPN/DeepLab$ python serverA4.py
+"""   YPL & JLL, 2021.11.2, 11.8
+(YPN) jinn@Liu:~/YPN/OPNet$ python serverA4.py --port 5557
+(YPN) jinn@Liu:~/YPN/OPNet$ python serverA4.py --port 5558 --validation
+use 2 terminals
 
 Input:
   bRGB (874, 1164, 3) = (H, W, C) <=> bYUV (1311, 1164) <=>  CbYUV (6, 291,  582) = (C, H, W) [key: 1311 =  874x3/2]
   sRGB (256,  512, 3) = (H, W, C) <=> sYUV  (384,  512) <=>  CsYUV (6, 128,  256) = (C, H, W) [key:  384 =  256x3/2]
-  /home/jinn/dataAll/comma10k/Ximgs_yuv/*.h5  (X for debugging)
+  /home/jinn/dataAll/comma10k/Ximgs_yuv/*.h5  (X for debugging with 10 imgs)
   /home/jinn/dataAll/comma10k/Xmasks/*.png
 Output:
   X_batch.shape = (none, 2x6, 128, 256) (num_channels = 6, 2 yuv images)
@@ -20,7 +22,6 @@ import argparse
 from datagenA4 import datagen
 from numpy.lib.format import header_data_from_array_1_0
 
-# Set these three global values the same as those in train_modelA4.py
 DATA_DIR_Imgs = '/home/jinn/dataAll/comma10k/Ximgs_yuv/'  # Ximgs with 10 images only for debugging
 DATA_DIR_Msks = '/home/jinn/dataAll/comma10k/Xmasks/'
 BATCH_SIZE = 2
@@ -32,6 +33,25 @@ MASK_W = 512
 
 class_values = [41,  76,  90, 124, 161, 0] # 0 added for padding
 # https://github.com/YassineYousfi/comma10k-baseline/blob/ca1c0d1f47e5c4cb14f7ab29130d8f20dec5fc87/LitModel.py
+
+all_img_dirs = os.listdir(DATA_DIR_Imgs)
+all_msk_dirs = os.listdir(DATA_DIR_Msks)
+all_images = [DATA_DIR_Imgs+i for i in all_img_dirs]
+all_masks = [DATA_DIR_Msks+i for i in all_msk_dirs]
+all_images = sorted(all_images)
+all_masks = sorted(all_masks)
+  #print('#---1  all_images =', all_images)
+  #print('#---2  all_masks =', all_masks)
+
+train_len = int(0.6*len(all_images))
+valid_len = int(0.4*len(all_images))
+train_images = all_images[: train_len]
+valid_images = all_images[train_len: train_len + valid_len]
+train_masks = all_masks[: train_len]
+valid_masks = all_masks[train_len: train_len + valid_len]
+#print('#---serverA4  len(all_images) =', len(all_images))
+#print('#---serverA4  len(train_images) =', len(train_images))
+#print('#---serverA4  len(valid_images) =', len(valid_images))
 
 if six.PY3:
   buffer_ = memoryview
@@ -112,25 +132,6 @@ if __name__ == "__main__":
     parser.add_argument('--validation', dest='validation', action='store_true', default=False, help='Serve validation dataset instead.')
     args, more = parser.parse_known_args()
 
-    all_img_dirs = os.listdir(DATA_DIR_Imgs)
-    all_msk_dirs = os.listdir(DATA_DIR_Msks)
-    all_images = [DATA_DIR_Imgs+i for i in all_img_dirs]
-    all_masks = [DATA_DIR_Msks+i for i in all_msk_dirs]
-    all_images = sorted(all_images)
-    all_masks = sorted(all_masks)
-      #print('#---1  all_images =', all_images)
-      #print('#---2  all_masks =', all_masks)
-
-    train_len  = int(0.6*len(all_images))
-    valid_len  = int(0.4*len(all_images))
-    train_images = all_images[: train_len]
-    valid_images = all_images[train_len: train_len + valid_len]
-    train_masks = all_masks[: train_len]
-    valid_masks = all_masks[train_len: train_len + valid_len]
-    print('#---serverA4  len(all_images) =', len(all_images))
-    print('#---serverA4  len(train_images) =', len(train_images))
-    print('#---serverA4  len(valid_images) =', len(valid_images))
-
     if args.validation:
         images = valid_images
         masks  = valid_masks
@@ -140,7 +141,7 @@ if __name__ == "__main__":
     #print('#---serverA4  images =', images)
 
     data_s = datagen(images, masks, BATCH_SIZE, IMAGE_H, IMAGE_W, MASK_H, MASK_W, class_values)
-    print('#---serverA4  BATCH_SIZE =', BATCH_SIZE)
+    #print('#---serverA4  BATCH_SIZE =', BATCH_SIZE)
     start_server(data_s, port=args.port, hwm=args.buffer)
 
 '''
