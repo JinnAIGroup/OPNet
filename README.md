@@ -2,8 +2,8 @@
 ## Goal: Build NN.dlc to replace [supercombo.dlc OPNet*](https://drive.google.com/file/d/1L8sWgYKtH77K6Kr3FQMETtAWeQNyyb8R/view) ([OPNet](http://www.nhcue.edu.tw/~jinnliu/teaching/AI17/supercombo.html))
 ## Project A 
 #### Read [Keras](https://keras.io/examples/vision/deeplabv3_plus), [comma10k](https://github.com/commaai/comma10k), [Yousfi](https://github.com/YassineYousfi/comma10k-baseline)
-#### Run modelA4a.py, modelA4f.py, modelA4.py, serverA4.py, datagenA4.py, hevc2yuvh5A4.py
-2021.11.3
+#### Run train_modelA4.py, 2021.11.8
+#### Run modelA4a.py, modelA4f.py, modelA4.py, serverA4.py, datagenA4.py, hevc2yuvh5A4.py, 2021.11.3
 ## Project B
 #### Run train_modelB3.py, serverB3.py, datagenB3.py, hevc2yuvh5B3.py, video_to_yuvB3a.py
 2021.11.3
