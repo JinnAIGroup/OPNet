@@ -51,11 +51,9 @@ Training History:
   EPOCHS = 10 + 10 + 10
   BATCH_SIZE = 8
   loss: 1.4313 - accuracy: 0.5135 - val_loss: 1.5886 - val_accuracy: 0.3667
-  Training Time: 00:09:37.29
   loss: 1.4202 - accuracy: 0.5198 - val_loss: 1.4471 - val_accuracy: 0.5059
-  Training Time: 00:09:30.82
   loss: 1.4117 - accuracy: 0.4779 - val_loss: 1.4259 - val_accuracy: 0.5112
-  Training Time: 00:09:54.38 (2021.11.9 14:16)
+  Training Time: 00:09:54.38 each
 
   #---datagenA4  imgsN = 8710
   #---datagenA4  imgsN = 967

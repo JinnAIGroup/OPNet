@@ -2,7 +2,7 @@
 from /home/jinn/YPN/OPNet/train_modelA4b.py
 train modelA4 = UNet on comma10k data
 use Cosine Annealing (CosAnn)
-download CosAnn https://github.com/4uiiurz1/keras-cosine-annealing/blob/master/cosine_annealing.py
+download CosAnn https://github.com/JinnAIGroup/OPNet/blob/main/cosine_annealing.py
 from cosine_annealing import CosineAnnealingScheduler
 
 1. Use OP supercombo I/O
@@ -54,6 +54,10 @@ Training History:
   #---datagenA4  imgsN = 180   train_len = int(0.9*len(all_images))
   #---datagenA4  imgsN = 20
   BATCH_SIZE = 8  EPOCHS = 10 + 10 + 10
+  loss: 1.6431 - accuracy: 0.1778 - val_loss: 1.7009 - val_accuracy: 0.1578
+  loss: 1.6023 - accuracy: 0.1463 - val_loss: 1.6803 - val_accuracy: 0.1454
+  loss: 1.5936 - accuracy: 0.1569 - val_loss: 1.6573 - val_accuracy: 0.1699
+  Training Time: 00:10:11.47 each
 
   #---datagenA4  imgsN = 8710   train_len = int(0.9*len(all_images))
   #---datagenA4  imgsN = 967
@@ -140,7 +144,7 @@ if __name__=="__main__":
         CosineAnnealingScheduler(T_max=100, eta_max=1e-2, eta_min=1e-4)
     ]
 
-    #model.load_weights('./saved_model/modelA4-BestWeights.hdf5', by_name=True)
+    model.load_weights('./saved_model/modelA4-BestWeights.hdf5', by_name=True)
     #adam = tf.keras.optimizers.Adam(lr=0.01)
     #model.compile(optimizer=adam, loss=custom_loss, metrics=["accuracy"])
     SGD = tf.keras.optimizers.SGD(lr=0.1, momentum=0.9)
