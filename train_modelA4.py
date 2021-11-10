@@ -1,13 +1,15 @@
-"""   JLL, 2021.11.5, 11.8
-from /home/jinn/YPN/OPNet/train_modelA4a.py
+"""   JLL, 2021.11.5, 11.9
+from /home/jinn/YPN/OPNet/train_modelA4b.py
 train modelA4 = UNet on comma10k data
-use custom_loss
+use Cosine Annealing (CosAnn)
+download CosAnn https://github.com/4uiiurz1/keras-cosine-annealing/blob/master/cosine_annealing.py
+from cosine_annealing import CosineAnnealingScheduler
 
 1. Use OP supercombo I/O
 2. Task: Multiclass semantic segmentation (num_classes = 6)
 3. Loss: tf.keras.losses.CategoricalCrossentropy
 
-Run: use 3 terminals
+Run: on 3 terminals
    (YPN) jinn@Liu:~/YPN/OPNet$ python serverA4.py --port 5557
    (YPN) jinn@Liu:~/YPN/OPNet$ python serverA4.py --port 5558 --validation
    (YPN) jinn@Liu:~/YPN/OPNet$ python train_modelA4.py --port 5557 --port_val 5558
@@ -27,8 +29,39 @@ Output:
      visualize: RGB segmentation masks (each pixel by a unique color corresponding
        to each predicted label from the human_colormap.mat file)
 
-  EPOCHS = 20: loss: 1.5808 - accuracy: 0.3710 - val_loss: 1.7751 - val_accuracy: 0.1851
-  EPOCHS = 40: loss: 1.4930 - accuracy: 0.4344 - val_loss: 1.7693 - val_accuracy: 0.1843
+Data Sets:
+  serverA4: train_len = int(0.6*len(all_images)): 6/10
+  DeepLabV3+: 1000/(1000+50),  BATCH_SIZE = 4, EPOCHS = 25
+  comma10k: BATCH_SIZE = 28, 7, EPOCHS = 100, 30
+    self.train_dataset ... if not x.endswith('9.png')
+    self.valid_dataset ... if x.endswith('9.png')
+    Yousfi 0.044 validation loss; commaai 0.051
+
+Training History:
+  #---datagenA4  imgsN = 8   train_len = int(0.8*len(all_images))
+  #---datagenA4  imgsN = 2
+  BATCH_SIZE = 2  EPOCHS = 10
+  Adam(lr=0.0001)
+  loss: 1.6716 - accuracy: 0.2848 - val_loss: 1.7785 - val_accuracy: 0.1522
+  Adam(lr=0.001
+  loss: 1.4964 - accuracy: 0.3880 - val_loss: 1.7184 - val_accuracy: 0.2948
+  Adam(lr=0.01)
+  loss: 1.6436 - accuracy: 0.2288 - val_loss: 1.6548 - val_accuracy: 0.2210
+  CosAnn w. SGD
+  loss: 1.7566 - accuracy: 0.2080 - val_loss: 1.7792 - val_accuracy: 0.3693
+
+  #---datagenA4  imgsN = 180   train_len = int(0.9*len(all_images))
+  #---datagenA4  imgsN = 20
+  BATCH_SIZE = 8  EPOCHS = 10 + 10 + 10
+
+
+  #---datagenA4  imgsN = 8710   train_len = int(0.9*len(all_images))
+  #---datagenA4  imgsN = 967
+  BATCH_SIZE = 8  EPOCHS = 10
+
+  Training Time: 08:40:12.15
+
+  (convergence too slow: Yousfi used Cosine Annealing)
 """
 import os
 import h5py
@@ -38,10 +71,11 @@ import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
 from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping
+from cosine_annealing import CosineAnnealingScheduler
 from modelA4 import get_model
 from serverA4 import client_generator, train_len, valid_len, BATCH_SIZE
 
-EPOCHS = 40
+EPOCHS = 10
 
 os.environ['CUDA_VISIBLE_DEVICES'] = "-1"
 
@@ -85,7 +119,7 @@ def custom_loss(y_true, y_pred):
     return loss
 
 if __name__=="__main__":
-    start_time = time.time()
+    start = time.time()
     parser = argparse.ArgumentParser(description='Training modelA4')
     parser.add_argument('--host', type=str, default="localhost", help='Data server ip address.')
     parser.add_argument('--port', type=int, default=5557, help='Port of server.')
@@ -102,11 +136,15 @@ if __name__=="__main__":
     filepath = "./saved_model/modelA4-BestWeights.hdf5"
     checkpoint = ModelCheckpoint(filepath, monitor='val_loss', verbose=1,
                                  save_best_only=True, mode='min')
-    callbacks_list = [checkpoint]
+    callbacks_list = [checkpoint,
+        CosineAnnealingScheduler(T_max=100, eta_max=1e-2, eta_min=1e-4)
+    ]
 
-    adam = tf.keras.optimizers.Adam(lr=0.0001)
     #model.load_weights('./saved_model/modelA4-BestWeights.hdf5', by_name=True)
-    model.compile(optimizer=adam, loss=custom_loss, metrics=["accuracy"])
+    #adam = tf.keras.optimizers.Adam(lr=0.01)
+    #model.compile(optimizer=adam, loss=custom_loss, metrics=["accuracy"])
+    SGD = tf.keras.optimizers.SGD(lr=0.1, momentum=0.9)
+    model.compile(optimizer=SGD, loss=custom_loss, metrics=["accuracy"])
 
       # https://www.pyimagesearch.com/2018/12/24/how-to-use-keras-fit-and-fit_generator-a-hands-on-tutorial/
     history = model.fit(
@@ -117,8 +155,12 @@ if __name__=="__main__":
         # steps_per_epoch = Total Training Samples / Training Batch Size
         # validation_steps = total_validation_samples / validation_batch_size
 
-    #print('#---  # of epochs are run =', len(history.history['loss']))
-    #model.save('./saved_model/modelA4.h5')
+    model.save('./saved_model/modelA4.h5')   # 35.6 M
+
+    end = time.time()
+    hours, rem = divmod(end-start, 3600)
+    minutes, seconds = divmod(rem, 60)
+    print("Training Time: {:0>2}:{:0>2}:{:05.2f}".format(int(hours),int(minutes),seconds))
 
     np.save('./saved_model/modelA4_loss', np.array(history.history['loss']))
     lossnpy = np.load('./saved_model/modelA4_loss.npy')
