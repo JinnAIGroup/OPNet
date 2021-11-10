@@ -1,12 +1,16 @@
+"""   JLL, 2021.11.10
+from https://github.com/4uiiurz1/keras-cosine-annealing
+"""
 import math
 from tensorflow.keras.callbacks import Callback
 from tensorflow.keras import backend as K
+
+print('#--- using cosine_annealing.py')
 
 
 class CosineAnnealingScheduler(Callback):
     """Cosine annealing scheduler.
     """
-
     def __init__(self, T_max, eta_max, eta_min=0, verbose=0):
         super(CosineAnnealingScheduler, self).__init__()
         self.T_max = T_max

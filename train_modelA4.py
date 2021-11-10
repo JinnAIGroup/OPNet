@@ -1,4 +1,4 @@
-"""   JLL, 2021.11.5, 11.9
+"""   JLL, 2021.11.5, 11.10
 from /home/jinn/YPN/OPNet/train_modelA4b.py
 train modelA4 = UNet on comma10k data
 use Cosine Annealing (CosAnn)
@@ -48,12 +48,12 @@ Training History:
   Adam(lr=0.01)
   loss: 1.6436 - accuracy: 0.2288 - val_loss: 1.6548 - val_accuracy: 0.2210
   CosAnn w. SGD
+  #--- using cosine_annealing.py
   loss: 1.7566 - accuracy: 0.2080 - val_loss: 1.7792 - val_accuracy: 0.3693
 
   #---datagenA4  imgsN = 180   train_len = int(0.9*len(all_images))
   #---datagenA4  imgsN = 20
   BATCH_SIZE = 8  EPOCHS = 10 + 10 + 10
-
 
   #---datagenA4  imgsN = 8710   train_len = int(0.9*len(all_images))
   #---datagenA4  imgsN = 967
