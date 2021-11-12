@@ -1,5 +1,6 @@
 """   YPL & JLL, 2021.11.8, 11.10
 from /home/jinn/YPN/OPNet/datagenA4a.py (see ???)
+11.10: Error corrected in Line 74
 
 Input:
   bRGB (874, 1164, 3) = (H, W, C) <=> bYUV (1311, 1164) <=> CbYUV (6, 291,  582) = (C, H, W) [key: 1311 =  874x3/2]
