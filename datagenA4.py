@@ -1,4 +1,4 @@
-"""   YPL & JLL, 2021.11.8
+"""   YPL & JLL, 2021.11.8, 11.10
 from /home/jinn/YPN/OPNet/datagenA4a.py (see ???)
 
 Input:
@@ -13,7 +13,6 @@ Output:
 import os
 import cv2
 import h5py
-import time
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -58,7 +57,6 @@ def datagen(images, masks, batch_size, image_H, image_W, mask_H, mask_W, class_v
     batchIndx = 0
 
     while True:
-        t = time.time()
         count = 0
         #np.random.seed(0)
         while count < batch_size:
@@ -72,7 +70,7 @@ def datagen(images, masks, batch_size, image_H, image_W, mask_H, mask_W, class_v
                     vsX2, vsY2 = concatenate(images[ri+1], masks[ri+1], mask_H, mask_W, class_values)
 
                     X_batch[count] = np.vstack((vsX1, vsX2))
-                    Y_batch[count] = np.concatenate((vsY1, vsY1), axis=-1)
+                    Y_batch[count] = np.concatenate((vsY1, vsY2), axis=-1)
                 break
 
             #print('#---  count =', count)
@@ -81,8 +79,6 @@ def datagen(images, masks, batch_size, image_H, image_W, mask_H, mask_W, class_v
 
         batchIndx += 1
         print('#---  batchIndx =', batchIndx)
-        t2 = time.time()
-        #print('#---  datagen time =', "%5.2f ms" % ((t2-t)*1000.0))
 
         #print('#---datagenA4  X_batch.shape =', X_batch.shape)
         #print('#---datagenA4  Y_batch.shape =', Y_batch.shape)
