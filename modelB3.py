@@ -11,7 +11,7 @@ OP PN supercombo from https://drive.google.com/file/d/1L8sWgYKtH77K6Kr3FQMETtAWe
 4. Output:
    #--- outputs.shape = (None, 112)
 Run:
-(YPN) jinn@Liu:~/YPN/OPNet$ python modelB3.py
+  (YPN) jinn@Liu:~/YPN/OPNet$ python modelB3.py
 '''
 from tensorflow import keras
 from tensorflow.keras import layers
@@ -59,7 +59,7 @@ def UNet(x0, num_classes):
         previous_block_activation = x  # Set aside next residual
 
     # Add a per-pixel classification layer (UNet final layer)
-    x = layers.Conv2D(num_classes, 3, activation="softmax", padding="same")(x)
+    x = layers.Conv2D(2*num_classes, 3, activation="softmax", padding="same")(x)
 
     # Add layers for PN
     x = layers.BatchNormalization()(x)
@@ -156,13 +156,13 @@ ________________________________________________________________________________
 add_1 (Add)                     (None, 32, 64, 64)   0           batch_normalization_1[0][0]
                                                                  conv2d_4[0][0]
 __________________________________________________________________________________________________
-conv2d_5 (Conv2D)               (None, 32, 64, 3)    1731        add_1[0][0]
+conv2d_5 (Conv2D)               (None, 32, 64, 6)    3462        add_1[0][0]
 __________________________________________________________________________________________________
-batch_normalization_2 (BatchNor (None, 32, 64, 3)    12          conv2d_5[0][0]
+batch_normalization_2 (BatchNor (None, 32, 64, 6)    24          conv2d_5[0][0]
 __________________________________________________________________________________________________
-activation_5 (Activation)       (None, 32, 64, 3)    0           batch_normalization_2[0][0]
+activation_5 (Activation)       (None, 32, 64, 6)    0           batch_normalization_2[0][0]
 __________________________________________________________________________________________________
-conv2d_6 (Conv2D)               (None, 16, 32, 32)   128         activation_5[0][0]
+conv2d_6 (Conv2D)               (None, 16, 32, 32)   224         activation_5[0][0]
 __________________________________________________________________________________________________
 activation_6 (Activation)       (None, 16, 32, 32)   0           conv2d_6[0][0]
 __________________________________________________________________________________________________
@@ -195,7 +195,7 @@ ________________________________________________________________________________
 concatenate (Concatenate)       (None, 112)          0           dense_2[0][0]
                                                                  dense_3[0][0]
 ==================================================================================================
-Total params: 177,791
-Trainable params: 177,529
-Non-trainable params: 262
+Total params: 179,630
+Trainable params: 179,362
+Non-trainable params: 268
 '''
