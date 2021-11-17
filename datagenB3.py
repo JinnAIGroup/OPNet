@@ -56,18 +56,18 @@ def datagen(camera_files, batch_size):
                       if ri < dataN-1:
                         vsX1 = cf5X[ri]
                         vsX2 = cf5X[ri+1]
-                        #---  vsX2.shape = (6, 128, 256)
+                          #---  vsX2.shape = (6, 128, 256)
                         X_batch[count] = np.vstack((vsX1, vsX2))
-                        #---  X_batch[count].shape = (12, 128, 256)
+                          #---  X_batch[count].shape = (12, 128, 256)
 
                         pf5P1 = pf5P[ri]
                         pf5P2 = pf5P[ri+1]
                         rf5L1 = rf5L[ri]
                         rf5L2 = rf5L[ri+1]
-                        #---  pf5P2.shape = (51,)
-                        #---  rf5L2.shape = (5,)
+                          #---  pf5P2.shape = (51,)
+                          #---  rf5L2.shape = (5,)
                         Y_batch[count] = np.hstack((pf5P1, rf5L1, pf5P2, rf5L2))
-                        #---  Y_batch[count].shape = (112,)
+                          #---  Y_batch[count].shape = (112,)
                         break
                     count += 1
 
@@ -77,7 +77,6 @@ def datagen(camera_files, batch_size):
                 if Nplot == 0:
                     Yb = Y_batch[0][:]
                     print('#---datagenB3  Yb.shape =', Yb.shape)
-                    #print('#---datagenB3  Yb =', Yb)
                     print('#---datagenB3  Y_batch[0][50:52] =', Y_batch[0][50:52])
                     print('#---datagenB3  Y_batch[0][106:108] =', Y_batch[0][106:108])
                     plt.plot(Yb)
