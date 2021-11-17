@@ -1,4 +1,4 @@
-"""   YPL & JLL, 2021.11.16
+"""   YPL & JLL, 2021.11.17
 from /home/jinn/YPN/YPNetB/serverB3.py
 
 Run: on 2 terminals
@@ -15,7 +15,6 @@ Output:
   Y_batch.shape = (none, 2x56)  (56 = 51 pathdata + 5 radardata)
 """
 import os
-import h5py
 import zmq
 import six
 import numpy
@@ -25,47 +24,7 @@ import argparse
 from datagenB3 import datagen
 from numpy.lib.format import header_data_from_array_1_0
 
-BATCH_SIZE = 16
-
-all_dirs = os.listdir('/home/jinn/dataB')
-all_yuvs = ['/home/jinn/dataB/'+i+'/yuv.h5' for i in all_dirs]
-  #print('#---  all_yuvs =', all_yuvs)
-random.seed(0) # makes the random numbers predictable
-random.shuffle(all_yuvs)
-
-path_files  = [f.replace('yuv', 'pathdata') for f in all_yuvs]
-radar_files = [f.replace('yuv', 'radardata') for f in all_yuvs]
-  #---  path_files  = ['/home/jinn/dataB/UHD--2018-08-02--08-34-47--32/pathdata.h5']
-  #---  radar_files = ['/home/jinn/dataB/UHD--2018-08-02--08-34-47--32/radardata.h5']
-
-for cfile, pfile, rfile in zip(all_yuvs, path_files, radar_files):
-    if os.path.isfile(cfile) and os.path.isfile(pfile) and os.path.isfile(rfile):
-          #print("#---  cfile =", cfile)
-        with h5py.File(cfile, "r") as cf5:
-            pf5 = h5py.File(pfile, 'r')
-            rf5 = h5py.File(rfile, 'r')
-              #---  cf5['X'].shape       = (1150, 6, 128, 256)
-              #---  pf5['Path'].shape    = (1150, 51)
-              #---  rf5['LeadOne'].shape = (1150, 5)
-            cf5X = cf5['X']
-            pf5P = pf5['Path']
-            rf5L = rf5['LeadOne']
-              #---  cf5X.shape = (1150, 6, 128, 256)
-            imgsN = len(cf5X)
-              #print("#---datagenB3  imgsN =", imgsN)
-
-            train_len  = int(0.9*imgsN)
-            valid_len  = int(0.1*imgsN)
-
-            train_cf5X = cf5X[: train_len]
-            valid_cf5X = cf5X[train_len: train_len + valid_len]
-            train_pf5P = pf5P[: train_len]
-            valid_pf5P = pf5P[train_len: train_len + valid_len]
-            train_rf5L = rf5L[: train_len]
-            valid_rf5L = rf5L[train_len: train_len + valid_len]
-    else:
-        print('#---serverB3  Error: cfile, pfile, or rfile does not exist')
-
+BATCH_SIZE = 8
 
 if six.PY3:
   buffer_ = memoryview
@@ -146,14 +105,25 @@ if __name__ == "__main__":
     parser.add_argument('--validation', dest='validation', action='store_true', default=False, help='Serve validation dataset instead.')
     args, more = parser.parse_known_args()
 
-    if args.validation:
-      cf5X_data = valid_cf5X
-      pf5P_data = valid_pf5P
-      rf5L_data = valid_rf5L
-    else:
-      cf5X_data = train_cf5X
-      pf5P_data = train_pf5P
-      rf5L_data = train_rf5L
+    all_dirs = os.listdir('/home/jinn/dataB')
+    all_yuvs = ['/home/jinn/dataB/'+i+'/yuv.h5' for i in all_dirs]
+      #print('#---  all_yuvs =', all_yuvs)
+    random.seed(0) # makes the random numbers predictable
+    random.shuffle(all_yuvs)
 
-    data_s = datagen(cf5X_data, pf5P_data, rf5L_data, BATCH_SIZE)
+    train_len  = int(0.5*len(all_yuvs))
+    valid_len  = int(0.5*len(all_yuvs))
+    train_files = all_yuvs[: train_len]
+    valid_files = all_yuvs[train_len: train_len + valid_len]
+    print('#---serverB3  len(all_yuvs) =', len(all_yuvs))
+    print('#---serverB3  len(train_files) =', len(train_files))
+    print('#---serverB3  len(valid_files) =', len(valid_files))
+
+    if args.validation:
+      camera_files = valid_files
+    else:
+      camera_files = train_files
+
+    print('#---serverB3  camera_files =', camera_files)
+    data_s = datagen(camera_files, BATCH_SIZE)
     start_server(data_s, port=args.port, hwm=args.buffer)

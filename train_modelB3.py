@@ -1,4 +1,4 @@
-"""   YPL & JLL, 2021.11.16
+"""   YPL & JLL, 2021.11.17
 from /home/jinn/YPN/OPNet/train_modelB3a.py
 train modelB3 = UNet + Pose Net (PN)
 
@@ -37,9 +37,9 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping
 from modelB3 import get_model
-from serverB3 import client_generator, train_len, valid_len, BATCH_SIZE
+from serverB3 import client_generator, BATCH_SIZE
 
-EPOCHS = 10
+EPOCHS = 2
 
 os.environ['CUDA_VISIBLE_DEVICES'] = "-1"
 
@@ -68,7 +68,6 @@ if __name__=="__main__":
     parser.add_argument('--port_val', type=int, default=5558, help='Port of server for validation dataset.')
     args = parser.parse_args()
 
-    print('#---  train_len, valid_len =', train_len, valid_len)
     # Build model
     img_shape = (12, 128, 256)
     num_classes = 6
@@ -86,9 +85,9 @@ if __name__=="__main__":
 
     history = model.fit(
         gen(20, args.host, port=args.port, model=model),
-        steps_per_epoch=1150//BATCH_SIZE, epochs=EPOCHS,
+        steps_per_epoch=10, epochs=EPOCHS,
         validation_data=gen(20, args.host, port=args.port_val, model=model),
-        validation_steps=1150//BATCH_SIZE, verbose=1, callbacks=callbacks_list)
+        validation_steps=10, verbose=1, callbacks=callbacks_list)
       # steps_per_epoch=1150//BATCH_SIZE = 71  use this for longer training
 
     model.save('./saved_model/modelB3.h5')
