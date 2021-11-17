@@ -79,7 +79,7 @@ if __name__=="__main__":
                                  save_best_only=True, mode='min')
     callbacks_list = [checkpoint]
 
-    model.load_weights('./saved_model/modelB3-BestWeights.hdf5', by_name=True)
+    #model.load_weights('./saved_model/modelB3-BestWeights.hdf5', by_name=True)
     adam = tf.keras.optimizers.Adam(lr=0.0001)
     model.compile(optimizer=adam, loss=custom_loss)
 
