@@ -12,5 +12,4 @@
 3. (YPN) jinn@Liu:~/YPN/Leon$ python3 main.py ./fcamera.hevc
 4. Read output.txt
 5. Your Project: Build your own Net to replace [supercombo.h5 OPNet*](https://drive.google.com/file/d/1L8sWgYKtH77K6Kr3FQMETtAWeQNyyb8R/view) ([OPNet](http://www.nhcue.edu.tw/~jinnliu/teaching/AI17/supercombo.html)).
-
-JLL 2020.7.2, 2021.8.17, 9.5., 11.17
+2021.9.5., 11.17
