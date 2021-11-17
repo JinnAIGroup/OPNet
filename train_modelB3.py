@@ -25,8 +25,8 @@ Output:
 
 Training History:
   BATCH_SIZE = 16  EPOCHS = 10
-  loss: 0.0407 - val_loss: 0.1059
-  Training Time: 00:13:16.03
+  loss: 0.0028 - val_loss: 0.2270
+  Training Time: 00:12:55.67
 """
 import os
 import h5py
