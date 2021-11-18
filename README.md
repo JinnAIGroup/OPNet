@@ -10,5 +10,4 @@
 2. mv /dataA/.../fcamera.hevc to /Leon/fcamera.hevc
 3. (YPN) jinn@Liu:~/YPN/Leon$ python3 main.py ./fcamera.hevc
 4. Read output.txt
-5. Your Project: Build your own Net to replace [supercombo.h5 OPNet*](https://drive.google.com/file/d/1L8sWgYKtH77K6Kr3FQMETtAWeQNyyb8R/view) ([OPNet](http://www.nhcue.edu.tw/~jinnliu/teaching/AI17/supercombo.html)).
 2021.9.5., 11.17
