@@ -46,7 +46,7 @@ def datagen(camera_files, batch_size):
                 rf5L = rf5['LeadOne']
                   #---  cf5X.shape = (1150, 6, 128, 256)
 
-                dataN = len(cf5X)
+                dataN = min(len(cf5X), len(pf5P), len(rf5L))
 
                 count = 0
                 while count < batch_size:
