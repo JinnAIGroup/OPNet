@@ -39,8 +39,8 @@ def datagen(camera_files, batch_size):
                 pf5 = h5py.File(pfile, 'r')
                 rf5 = h5py.File(rfile, 'r')
                   #---  cf5['X'].shape       = (1150, 6, 128, 256)
-                  #---  pf5['Path'].shape    = (1150, 51)
-                  #---  rf5['LeadOne'].shape = (1150, 5)
+                  #---  pf5['Path'].shape    = (1149, 51)
+                  #---  rf5['LeadOne'].shape = (1149, 5)
                 cf5X = cf5['X']
                 pf5P = pf5['Path']
                 rf5L = rf5['LeadOne']
