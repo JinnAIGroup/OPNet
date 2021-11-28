@@ -1,10 +1,7 @@
-'''   JLL, 2021.11.28
-from /home/jinn/YPN/OPNet/modelB3b.py
+'''   JLL, 2021.10.20
 Build modelB3 = UNet + Pose Net (PN)
-pad Y_batch from 112 to 2383, path vector (pf5P) from 51 to 192 etc.
-2383: see https://github.com/JinnAIGroup/OPNet/blob/main/output.txt
-outs[0] = pf5P1 + pf5P2 = 385, outs[3] = rf5L1 + rf5L2 = 58
-PWYbatch =  2383 - 2*192 - 1 - 2*29 = 1940
+UNet from https://keras.io/examples/vision/oxford_pets_image_segmentation/
+OP PN supercombo from https://drive.google.com/file/d/1L8sWgYKtH77K6Kr3FQMETtAWeQNyyb8R/view
 
 1. Use supercombo I/O
 2. Task: Regression for Path Prediction
@@ -12,7 +9,7 @@ PWYbatch =  2383 - 2*192 - 1 - 2*29 = 1940
    #--- inputs.shape = (None, 12, 128, 256)
    #--- x0.shape = (None, 128, 256, 12)  # permutation layer
 4. Output:
-   #--- outputs.shape = (None, 2383)
+   #--- outputs.shape = (None, 112)
 Run:
   (YPN) jinn@Liu:~/YPN/OPNet$ python modelB3.py
 '''
@@ -85,11 +82,9 @@ def UNet(x0, num_classes):
 def PN(x):
     x1 = layers.Dense(64, activation='relu')(x)
     x2 = layers.Dense(64, activation='relu')(x)
-    x3 = layers.Dense(64, activation='relu')(x)
-    out1 = layers.Dense(385)(x1)
-    out2 = layers.Dense(58)(x2)
-    out3 = layers.Dense(1940)(x3)
-    outputs = layers.Concatenate(axis=-1)([out1, out2, out3])
+    out1 = layers.Dense(56)(x1)
+    out2 = layers.Dense(56)(x2)
+    outputs = layers.Concatenate(axis=-1)([out1, out2])
     return outputs
 
 def get_model(img_shape, num_classes):
@@ -102,7 +97,7 @@ def get_model(img_shape, num_classes):
 
     # Define the model
     model = keras.Model(inputs, outputs)
-    #--- outputs.shape = (None, 2383)
+    #--- outputs.shape = (None, 112)
     return model
 
 if __name__=="__main__":
@@ -115,6 +110,8 @@ if __name__=="__main__":
     model = get_model(img_shape, num_classes)
     model.summary()
 '''
+By Tom OK for dlc
+
 Model: "functional_1"
 __________________________________________________________________________________________________
 Layer (type)                    Output Shape         Param #     Connected to
@@ -191,19 +188,14 @@ dense (Dense)                   (None, 64)           4160        flatten[0][0]
 __________________________________________________________________________________________________
 dense_1 (Dense)                 (None, 64)           4160        flatten[0][0]
 __________________________________________________________________________________________________
-dense_2 (Dense)                 (None, 64)           4160        flatten[0][0]
+dense_2 (Dense)                 (None, 56)           3640        dense[0][0]
 __________________________________________________________________________________________________
-dense_3 (Dense)                 (None, 385)          25025       dense[0][0]
+dense_3 (Dense)                 (None, 56)           3640        dense_1[0][0]
 __________________________________________________________________________________________________
-dense_4 (Dense)                 (None, 58)           3770        dense_1[0][0]
-__________________________________________________________________________________________________
-dense_5 (Dense)                 (None, 1940)         126100      dense_2[0][0]
-__________________________________________________________________________________________________
-concatenate (Concatenate)       (None, 2383)         0           dense_3[0][0]
-                                                                 dense_4[0][0]
-                                                                 dense_5[0][0]
+concatenate (Concatenate)       (None, 112)          0           dense_2[0][0]
+                                                                 dense_3[0][0]
 ==================================================================================================
-Total params: 331,405
-Trainable params: 331,137
+Total params: 179,630
+Trainable params: 179,362
 Non-trainable params: 268
 '''

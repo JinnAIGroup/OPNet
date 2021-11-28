@@ -1,15 +1,11 @@
-"""   JLL, 2021.11.28
-from /home/jinn/YPN/OPNet/train_modelB3b.py
+"""   YPL & JLL, 2021.11.17
+from /home/jinn/YPN/OPNet/train_modelB3a.py
 train modelB3 = UNet + Pose Net (PN)
-pad Y_batch from 112 to 2383, path vector (pf5P) from 51 to 192 etc.
-2383: see https://github.com/JinnAIGroup/OPNet/blob/main/output.txt
-outs[0] = pf5P1 + pf5P2 = 385, outs[3] = rf5L1 + rf5L2 = 58
-PWYbatch =  2383 - 2*192 - 1 - 2*29 = 1940
 
 1. Use OP supercombo I/O
 2. Task: Regression for Path Prediction
 3. Pose: 56 = Ego path 51 (x, y) + 5 radar lead car's dRel (relative distance), yRel, vRel (velocity), aRel (acceleration), prob
-4. Ground Truth: Y_batch = (none, 2383)
+4. Ground Truth: Y_batch = (none, 112)
 5. Loss: mean squared error (mse)
 6. Input:
    X_batch from yuv.h: 2 YUV images with 6 channels = (none, 12, 128, 256)
@@ -28,9 +24,9 @@ Output:
   /OPNet/saved_model/modelB3_loss.npy
 
 Training History:
-  BATCH_SIZE = 16  EPOCHS = 2
-  loss: 0.0177 - val_loss: 0.0154
-  Training Time: 00:02:44.61
+  BATCH_SIZE = 16  EPOCHS = 10
+  loss: 0.0028 - val_loss: 0.2270
+  Training Time: 00:12:55.67
 """
 import os
 import h5py
@@ -53,8 +49,8 @@ def gen(hwm, host, port, model):
           #print('#--- X_batch.shape =', X_batch.shape)
           #print('#--- Y_batch.shape =', Y_batch.shape)
 
-          #---  X_batch.shape = (16, 12, 128, 256)
-          #---  Y_batch.shape = (16, 2383)
+          #--- X_batch.shape = (25, 12, 128, 256)
+          #--- Y_batch.shape = (25, 112)
         yield X_batch, Y_batch
 
 def custom_loss(y_true, y_pred):
@@ -83,7 +79,7 @@ if __name__=="__main__":
                                  save_best_only=True, mode='min')
     callbacks_list = [checkpoint]
 
-    #model.load_weights('./saved_model/modelB3-BestWeights.hdf5', by_name=True)
+    model.load_weights('./saved_model/modelB3-BestWeights.hdf5', by_name=True)
     adam = tf.keras.optimizers.Adam(lr=0.0001)
     model.compile(optimizer=adam, loss=custom_loss)
 

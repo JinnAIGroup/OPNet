@@ -1,9 +1,6 @@
-"""   JLL, 2021.11.28
-from /home/jinn/YPN/OPNet/datagenB3c.py
-pad Y_batch from 112 to 2383, path vector (pf5P) from 51 to 192 etc.
-2383: see https://github.com/JinnAIGroup/OPNet/blob/main/output.txt
-outs[0] = pf5P1 + pf5P2 = 385, outs[3] = rf5L1 + rf5L2 = 58
-PWYbatch =  2383 - 2*192 - 1 - 2*29 = 1940
+"""   YPL & JLL, 2021.11.17
+from /home/jinn/YPN/OPNet/datagenA4.py and datagenB3b.py
+solve ??? in datagenA4a.py
 make yuv.h5 by /home/jinn/openpilot/tools/lib/hevc2yuvh5B3.py
 
 Input:
@@ -14,7 +11,7 @@ Input:
   /home/jinn/dataB/UHD--2018-08-02--08-34-47--32/radardata.h5
 Output:
   X_batch.shape = (none, 2x6, 128, 256)  (num_channels = 6, 2 yuv images)
-  Y_batch.shape = (none, 2383)
+  Y_batch.shape = (none, 2x56)  (56 = 51 pathdata + 5 radardata)
 """
 import os
 import h5py
@@ -23,7 +20,7 @@ import matplotlib.pyplot as plt
 
 def datagen(camera_files, batch_size):
     X_batch = np.zeros((batch_size, 12, 128, 256), dtype='float32')   # for YUV imgs
-    Y_batch = np.zeros((batch_size, 2383), dtype='float32')
+    Y_batch = np.zeros((batch_size, 112), dtype='float32')
     path_files  = [f.replace('yuv', 'pathdata') for f in camera_files]
     radar_files = [f.replace('yuv', 'radardata') for f in camera_files]
       #---  path_files  = ['/home/jinn/dataB/UHD--2018-08-02--08-34-47--32/pathdata.h5']
@@ -50,11 +47,6 @@ def datagen(camera_files, batch_size):
                   #---  cf5X.shape           = (1150, 6, 128, 256)
 
                 dataN = min(len(cf5X), len(pf5P), len(rf5L))
-                PWPath   = 192 - pf5P.shape[1]   # PW = pad_width
-                PWLead   =  29 - rf5L.shape[1]
-                PWYbatch =  2383 - 2*192 - 1 - 2*29
-                  #---  PWPath, PWLead, PWYbatch = 141 24 1940
-                  #print("#---  PWPath, PWLead, PWYbatch =", PWPath, PWLead, PWYbatch)
 
                 count = 0
                 while count < batch_size:
@@ -74,18 +66,8 @@ def datagen(camera_files, batch_size):
                         rf5L2 = rf5L[ri+1]
                           #---  pf5P2.shape = (51,)
                           #---  rf5L2.shape = (5,)
-                        pf5P1 = np.pad(pf5P1, (0, PWPath), 'constant')   # pad PWPath zeros ('constant') to the right; (0, PWPath) = (left, right)
-                          #---  pf5P1.shape = (192,)
-                        pf5P2 = np.pad(pf5P2, (0, PWPath+1), 'constant')   # +1 to 385
-                        rf5L1 = np.pad(rf5L1, (0, PWLead), 'constant')
-                        rf5L2 = np.pad(rf5L2, (0, PWLead), 'constant')
-                        Ybatch = np.hstack((pf5P1, pf5P2, rf5L1, rf5L2))
-                          #---  Ybatch.shape = (443,)
-                          #print("#---  Ybatch.shape =", Ybatch.shape)
-                        Ybatch = np.pad(Ybatch, (0, PWYbatch), 'constant')
-                          #---  Ybatch.shape = (2383,)
-
-                        Y_batch[count] = Ybatch
+                        Y_batch[count] = np.hstack((pf5P1, rf5L1, pf5P2, rf5L2))
+                          #---  Y_batch[count].shape = (112,)
                         break
                     count += 1
 
@@ -94,31 +76,26 @@ def datagen(camera_files, batch_size):
 
                 if Nplot == 0:
                     Yb = Y_batch[0][:]
-                    print('#---datagenB3  Y_batch[0][50:51] =', Y_batch[0][50:51])   # valid_len
-                    print('#---datagenB3  Y_batch[0][242:243] =', Y_batch[0][242:243])   # valid_len, 242 = 50+192
-                    print('#---datagenB3  Y_batch[0][50:51] =', Y_batch[0][385:386])   # lcar's d
-                    print('#---datagenB3  Y_batch[0][242:243] =', Y_batch[0][414:415])   # lcar's d, 414 = 385+29
+                    print('#---datagenB3  Yb.shape =', Yb.shape)
+                    print('#---datagenB3  Y_batch[0][50:52] =', Y_batch[0][50:52])
+                    print('#---datagenB3  Y_batch[0][106:108] =', Y_batch[0][106:108])
                     plt.plot(Yb)
                     plt.show()
                     Nplot += 1
 
-                Y_batch[:, 50:51]/=100   # normalize valid_len
-                Y_batch[:, 242:243]/=100
-                Y_batch[:, 385:386]/=100   # normalize lcar's d
-                Y_batch[:, 414:415]/=100
+                Y_batch[:, 50:52]/=100   # normalize 50 (valid_len), 51 (lcar's d)
+                Y_batch[:, 106:108]/=100
 
                 if Nplot == 1:
                     Yb = Y_batch[0][:]
-                    print('#---datagenB3  Y_batch[0][50:51] =', Y_batch[0][50:51])   # valid_len
-                    print('#---datagenB3  Y_batch[0][242:243] =', Y_batch[0][242:243])   # valid_len, 242 = 50+192
-                    print('#---datagenB3  Y_batch[0][50:51] =', Y_batch[0][385:386])   # lcar's d
-                    print('#---datagenB3  Y_batch[0][242:243] =', Y_batch[0][414:415])   # lcar's d, 414 = 385+29
+                    print('#---datagenB3  Y_batch[0][50:52] =', Y_batch[0][50:52])
+                    print('#---datagenB3  Y_batch[0][106:108] =', Y_batch[0][106:108])
                     plt.plot(Yb)
                     plt.show()
                     Nplot += 1
 
-                  #print('#---  X_batch.shape =', X_batch.shape)
-                  #print('#---  Y_batch.shape =', Y_batch.shape)
-                  #---  X_batch.shape = (16, 12, 128, 256)
-                  #---  Y_batch.shape = (16, 2383)
+                  #print('#---datagenB3  X_batch.shape =', X_batch.shape)
+                  #print('#---datagenB3  Y_batch.shape =', Y_batch.shape)
+                  #---  X_batch.shape = (25, 12, 128, 256)
+                  #---  Y_batch.shape = (25, 112)
                 yield(X_batch, Y_batch)
