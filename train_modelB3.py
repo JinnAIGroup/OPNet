@@ -60,9 +60,9 @@ def gen(hwm, host, port, model):
 def custom_loss(y_true, y_pred):
       #print('#---  y_true[0, :] =', y_true[0, :])
       #print('#---  y_pred[0, :] =', y_pred[0, :])
-    loss1 = tf.keras.losses.mse(y_true1, y_pred1)
-    loss2 = tf.keras.losses.mse(y_true2, y_pred2)
-    loss3 = tf.keras.losses.mse(y_true3, y_pred3)
+    loss1 = tf.keras.losses.mse(y_true[0], y_pred[0])
+    loss2 = tf.keras.losses.mse(y_true[1], y_pred[1])
+    loss3 = tf.keras.losses.mse(y_true[2], y_pred[2])
     loss = 0.5*loss1 + 0.5*loss2
 
     return loss
