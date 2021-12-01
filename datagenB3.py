@@ -23,7 +23,9 @@ import matplotlib.pyplot as plt
 
 def datagen(camera_files, batch_size):
     Ximgs = np.zeros((batch_size, 12, 128, 256), dtype='float32')   # for YUV imgs
-    Ytrue = np.zeros((batch_size, 2383), dtype='float32')
+    Ytrue1 = np.zeros((batch_size, 385), dtype='float32')
+    Ytrue2 = np.zeros((batch_size, 58), dtype='float32')
+    Ytrue3 = np.zeros((batch_size, 1940), dtype='float32')
     path_files  = [f.replace('yuv', 'pathdata') for f in camera_files]
     radar_files = [f.replace('yuv', 'radardata') for f in camera_files]
       #---  path_files  = ['/home/jinn/dataB/UHD--2018-08-02--08-34-47--32/pathdata.h5']
@@ -93,7 +95,7 @@ def datagen(camera_files, batch_size):
                 print('#---  batchIndx =', batchIndx)
 
                 if Nplot == 0:
-                    Yb = Ytrue[0][:]
+                    Yb = Ytrue1[0][:]
                     print('#---datagenB3  Ytrue1[0][50:51] =', Ytrue1[0][50:51])   # valid_len
                     print('#---datagenB3  Ytrue1[0][242:243] =', Ytrue1[0][242:243])   # valid_len, 242 = 50+192
                     print('#---datagenB3  Ytrue2[0][50:51] =', Ytrue2[0][0:1])   # lcar's d
@@ -108,7 +110,7 @@ def datagen(camera_files, batch_size):
                 Ytrue2[:, 29:30]/=100
 
                 if Nplot == 1:
-                    Yb = Ytrue[0][:]
+                    Yb = Ytrue1[0][:]
                     print('#---datagenB3  Ytrue1[0][50:51] =', Ytrue1[0][50:51])   # valid_len
                     print('#---datagenB3  Ytrue1[0][242:243] =', Ytrue1[0][242:243])   # valid_len, 242 = 50+192
                     print('#---datagenB3  Ytrue2[0][50:51] =', Ytrue2[0][0:1])   # lcar's d
