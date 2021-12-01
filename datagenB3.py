@@ -119,9 +119,9 @@ def datagen(camera_files, batch_size):
                     plt.show()
                     Nplot += 1
 
-               print('#---  Ytrue1.shape =', Ytrue1.shape)
-               print('#---  Ytrue2.shape =', Ytrue2.shape)
-               print('#---  Ytrue3.shape =', Ytrue3.shape)
+                print('#---  Ytrue1.shape =', Ytrue1.shape)
+                print('#---  Ytrue2.shape =', Ytrue2.shape)
+                print('#---  Ytrue3.shape =', Ytrue3.shape)
                   #---  Ximgs.shape = (16, 12, 128, 256)
                   #---  Ytrue.shape = (16, 2383)
                 yield Ximgs, Ytrue1, Ytrue2, Ytrue3
