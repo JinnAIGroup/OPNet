@@ -1,5 +1,5 @@
-"""   JLL, 2021.11.28
-from /home/jinn/YPN/OPNet/train_modelB3b.py
+"""   JLL, 2021.12.1
+from /home/jinn/YPN/OPNet/train_modelB3c.py
 train modelB3 = UNet + Pose Net (PN)
 pad Y_batch from 112 to 2383, path vector (pf5P) from 51 to 192 etc.
 2383: see https://github.com/JinnAIGroup/OPNet/blob/main/output.txt
@@ -49,18 +49,21 @@ os.environ['CUDA_VISIBLE_DEVICES'] = "-1"
 
 def gen(hwm, host, port, model):
     for tup in client_generator(hwm=hwm, host=host, port=port):
-        X_batch, Y_batch = tup
-          #print('#--- X_batch.shape =', X_batch.shape)
-          #print('#--- Y_batch.shape =', Y_batch.shape)
+        Ximgs, Ytrue1, Ytrue2, Ytrue3 = tup
 
-          #---  X_batch.shape = (16, 12, 128, 256)
-          #---  Y_batch.shape = (16, 2383)
-        yield X_batch, Y_batch
+          #---  Ximgs.shape = (16, 12, 128, 256)
+          #---  Ytrue.shape = (16, 2383)
+        yield Ximgs, (Ytrue1, Ytrue2, Ytrue3)
 
+  # multiple losses: https://stackoverflow.com/questions/53707199/keras-combining-two-losses-with-adjustable-weights-where-the-outputs-do-not-have
+  # https://stackoverflow.com/questions/58230074/how-to-optimize-multiple-loss-functions-separately-in-keras
 def custom_loss(y_true, y_pred):
       #print('#---  y_true[0, :] =', y_true[0, :])
       #print('#---  y_pred[0, :] =', y_pred[0, :])
-    loss = tf.keras.losses.mse(y_true, y_pred)
+    loss1 = tf.keras.losses.mse(y_true1, y_pred1)
+    loss2 = tf.keras.losses.mse(y_true2, y_pred2)
+    loss3 = tf.keras.losses.mse(y_true3, y_pred3)
+    loss = 0.5*loss1 + 0.5*loss2
 
     return loss
 

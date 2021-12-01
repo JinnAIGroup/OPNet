@@ -1,5 +1,5 @@
-'''   JLL, 2021.11.28
-from /home/jinn/YPN/OPNet/modelB3b.py
+'''   JLL, 2021.11.30
+from /home/jinn/YPN/OPNet/modelB3c.py
 Build modelB3 = UNet + Pose Net (PN)
 pad Y_batch from 112 to 2383, path vector (pf5P) from 51 to 192 etc.
 2383: see https://github.com/JinnAIGroup/OPNet/blob/main/output.txt
@@ -90,7 +90,7 @@ def PN(x):
     out2 = layers.Dense(58)(x2)
     out3 = layers.Dense(1940)(x3)
     outputs = layers.Concatenate(axis=-1)([out1, out2, out3])
-    return outputs
+    return (out1, out2, out3)
 
 def get_model(img_shape, num_classes):
     inputs = keras.Input(shape=img_shape)
@@ -98,10 +98,10 @@ def get_model(img_shape, num_classes):
     x0 = layers.Permute((2, 3, 1))(inputs)
     #--- x0.shape = (None, 128, 256, 12)
     x = UNet(x0, num_classes)
-    outputs = PN(x)
+    out1, out2, out3 = PN(x)
 
     # Define the model
-    model = keras.Model(inputs, outputs)
+    model = keras.Model(inputs, outputs=[out1, out2, out3])
     #--- outputs.shape = (None, 2383)
     return model
 
