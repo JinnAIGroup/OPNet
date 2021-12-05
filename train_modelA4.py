@@ -144,7 +144,7 @@ if __name__=="__main__":
         CosineAnnealingScheduler(T_max=100, eta_max=1e-2, eta_min=1e-4)
     ]
 
-    model.load_weights('./saved_model/modelA4-BestWeights.hdf5', by_name=True)
+    #model.load_weights('./saved_model/modelA4-BestWeights.hdf5', by_name=True)
     #adam = tf.keras.optimizers.Adam(lr=0.01)
     #model.compile(optimizer=adam, loss=custom_loss, metrics=["accuracy"])
     SGD = tf.keras.optimizers.SGD(lr=0.1, momentum=0.9)
