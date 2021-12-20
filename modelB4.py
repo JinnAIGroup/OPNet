@@ -1,4 +1,4 @@
-'''   JLL, 2021.12.20
+'''   JLL, YJW, 2021.12.20
 modelB4 = EfficientNet + RNN + PoseNet (no Project A)
 from /home/jinn/YPN/OPNet/superB4.py
 supercombo: https://drive.google.com/file/d/1L8sWgYKtH77K6Kr3FQMETtAWeQNyyb8R/view
@@ -88,7 +88,7 @@ def block(x0):
     x = layers.add([tmp,x], name="block"+count+"c_add")
 
     count="3"
-    x = layers.Conv2D(144, 1, padding="same", name="block"+count+"a_expand_conv")(x)
+    x = layers.Conv2D(144, 1, padding="saYJW, me", name="block"+count+"a_expand_conv")(x)
     x = layers.Activation("elu", name="block"+count+"a_expand_activation")(x)
     x = layers.DepthwiseConv2D(5, depth_multiplier=1,strides=2, padding="same", name="block"+count+"a_dwconv")(x)
     x = layers.Activation("elu", name="block"+count+"a_activation")(x)
