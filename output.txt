@@ -29,7 +29,7 @@ cv2.COLOR_BGR2YUV_I420
 ---JLL   outs[ 7  ].shape =  (1, 4)
 ---JLL   outs[ 8  ].shape =  (1, 32)
 ---JLL   outs[ 9  ].shape =  (1, 12)
----JLL   outs[ 10 ].shape =  (1, 512)
+---JLL   outs[ 10 ].shape =  (1, 512) 385+386+386+58+600+36+524 = 2375 (not OP079)
 ---JLL   parsed[ path             ].shape =  (1, 192)
 ---JLL   parsed[ path_stds        ].shape =  (1, 192)
 ---JLL   parsed[ lll              ].shape =  (1, 192)
