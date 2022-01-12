@@ -61,7 +61,7 @@ cv2.COLOR_BGR2YUV_I420
 Press ENTER twice to close all windows ...
 Press ENTER to exit ...
 
-modeldata.h
+modeldata.h (not OP079)
 constexpr int MODEL_PATH_DISTANCE = 192;
 constexpr int  TRAJECTORY_SIZE = 33;
 constexpr float MIN_DRAW_DISTANCE = 10.0;
@@ -71,7 +71,7 @@ constexpr int SPEED_PERCENTILES = 10;
 constexpr int DESIRE_PRED_SIZE = 32;
 constexpr int OTHER_META_SIZE = 4;
 
-driving.cc
+driving.cc (not OP079)
 constexpr int PLAN_MHP_N = 5;
 constexpr int PLAN_MHP_COLUMNS = 30;
 constexpr int PLAN_MHP_VALS = 30*33;
